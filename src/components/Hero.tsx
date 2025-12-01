@@ -33,7 +33,7 @@ export const Hero = () => {
           <Button 
             size="lg" 
             onClick={() => setBookingOpen(true)}
-            className="bg-gradient-primary hover:opacity-90 transition-smooth text-primary-foreground font-medium px-8 py-6 text-lg shadow-elegant"
+            className="bg-gradient-primary hover:opacity-90 transition-smooth text-primary-foreground font-medium px-8 py-6 text-lg shadow-elegant cursor-pointer"
           >
             Book Appointment
           </Button>
@@ -44,14 +44,14 @@ export const Hero = () => {
               const servicesSection = document.getElementById('services');
               servicesSection?.scrollIntoView({ behavior: 'smooth' });
             }}
-            className="border-border hover:bg-secondary transition-smooth px-8 py-6 text-lg"
+            className="border-border hover:bg-secondary transition-smooth px-8 py-6 text-lg cursor-pointer"
           >
             View Services
           </Button>
         </div>
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent z-10" />
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent z-10 pointer-events-none" />
       
       <BookingDialog open={bookingOpen} onOpenChange={setBookingOpen} />
     </section>

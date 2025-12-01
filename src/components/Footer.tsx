@@ -6,7 +6,7 @@ export const Footer = () => {
           Lucy's Beauty Parlour
         </h3>
         <p className="font-inter text-muted-foreground mb-6">
-          Where elegance meets expertise
+          Let your beauty flow.
         </p>
         <p className="font-inter text-sm text-muted-foreground">
           © {new Date().getFullYear()} Lucy's Beauty Parlour. All rights reserved.

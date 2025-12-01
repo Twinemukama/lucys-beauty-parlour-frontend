@@ -1,10 +1,8 @@
-# Welcome to your Lovable project
+# Lucy's beauty parlour
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/3684ec2a-7de5-4ed8-a34d-dc5ace4b7fa8
-
-## How can I edit this code?
+## How to edit this code?
 
 There are several ways of editing your application.
 
