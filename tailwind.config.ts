@@ -57,6 +57,27 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        "rose-gold": "hsl(var(--rose-gold))",
+        "rose-gold-light": "hsl(var(--rose-gold-light))",
+        "rose-gold-dark": "hsl(var(--rose-gold-dark))",
+        cream: "hsl(var(--cream))",
+        "warm-white": "hsl(var(--warm-white))",
+        "warm-gray": "hsl(var(--warm-gray))",
+      },
+      fontFamily: {
+        playfair: ["Playfair Display", "serif"],
+        inter: ["Inter", "sans-serif"],
+      },
+      backgroundImage: {
+        "gradient-primary": "var(--gradient-primary)",
+        "gradient-hero": "var(--gradient-hero)",
+      },
+      boxShadow: {
+        soft: "var(--shadow-soft)",
+        elegant: "var(--shadow-elegant)",
+      },
+      transitionProperty: {
+        smooth: "var(--transition-smooth)",
       },
       borderRadius: {
         lg: "var(--radius)",
