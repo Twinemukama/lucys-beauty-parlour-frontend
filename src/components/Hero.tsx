@@ -1,7 +1,11 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { BookingDialog } from "@/components/BookingDialog";
 import heroImage from "@/assets/hero-salon.jpg";
 
 export const Hero = () => {
+  const [bookingOpen, setBookingOpen] = useState(false);
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image with Overlay */}
@@ -23,7 +27,11 @@ export const Hero = () => {
           Where elegance meets expertise. Experience luxury beauty treatments in a serene, sophisticated setting.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <Button size="lg" className="bg-gradient-primary hover:opacity-90 transition-smooth text-primary-foreground font-medium px-8 py-6 text-lg shadow-elegant">
+          <Button 
+            size="lg" 
+            onClick={() => setBookingOpen(true)}
+            className="bg-gradient-primary hover:opacity-90 transition-smooth text-primary-foreground font-medium px-8 py-6 text-lg shadow-elegant"
+          >
             Book Appointment
           </Button>
           <Button size="lg" variant="outline" className="border-border hover:bg-secondary transition-smooth px-8 py-6 text-lg">
@@ -34,6 +42,8 @@ export const Hero = () => {
 
       {/* Decorative Elements */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent z-10" />
+      
+      <BookingDialog open={bookingOpen} onOpenChange={setBookingOpen} />
     </section>
   );
 };
