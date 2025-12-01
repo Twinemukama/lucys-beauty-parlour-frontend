@@ -8,7 +8,6 @@ export const Hero = () => {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
         <img
           src={heroImage}
@@ -18,8 +17,12 @@ export const Hero = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/80 to-background/95" />
       </div>
 
-      {/* Content */}
       <div className="relative z-10 text-center px-4 py-20 max-w-5xl mx-auto animate-in fade-in duration-1000">
+        <img 
+          src="/lbp.png" 
+          alt="Lucy's Beauty Parlour Logo" 
+          className="h-50 w-48 mx-auto mb-6 rounded-full"
+        />
         <h1 className="font-playfair text-6xl md:text-8xl font-bold text-foreground mb-6 tracking-tight">
           Lucy's Beauty Parlour
         </h1>
@@ -34,13 +37,20 @@ export const Hero = () => {
           >
             Book Appointment
           </Button>
-          <Button size="lg" variant="outline" className="border-border hover:bg-secondary transition-smooth px-8 py-6 text-lg">
+          <Button 
+            size="lg" 
+            variant="outline" 
+            onClick={() => {
+              const servicesSection = document.getElementById('services');
+              servicesSection?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="border-border hover:bg-secondary transition-smooth px-8 py-6 text-lg"
+          >
             View Services
           </Button>
         </div>
       </div>
 
-      {/* Decorative Elements */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent z-10" />
       
       <BookingDialog open={bookingOpen} onOpenChange={setBookingOpen} />

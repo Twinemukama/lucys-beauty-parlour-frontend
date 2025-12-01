@@ -1,17 +1,19 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
+import { BookingDialog } from "./BookingDialog";
 
 const contactInfo = [
   {
     icon: MapPin,
     title: "Location",
-    details: "123 Beauty Lane, Downtown District",
+    details: "Kisasi Mall, Kampala, Uganda",
   },
   {
     icon: Phone,
     title: "Phone",
-    details: "(555) 123-4567",
+    details: "+(256) 755-897061",
   },
   {
     icon: Mail,
@@ -26,6 +28,7 @@ const contactInfo = [
 ];
 
 export const Contact = () => {
+  const [bookingOpen, setBookingOpen] = useState(false);
   return (
     <section className="py-24 px-4 bg-gradient-hero">
       <div className="max-w-6xl mx-auto">
@@ -61,11 +64,12 @@ export const Contact = () => {
         </div>
 
         <div className="text-center animate-in fade-in duration-700 delay-500">
-          <Button size="lg" className="bg-gradient-primary hover:opacity-90 transition-smooth text-primary-foreground font-medium px-10 py-6 text-lg shadow-elegant">
+          <Button size="lg" onClick={() => setBookingOpen(true)} className="bg-gradient-primary hover:opacity-90 transition-smooth text-primary-foreground font-medium px-10 py-6 text-lg shadow-elegant">
             Book Your Appointment Today
           </Button>
         </div>
       </div>
+      <BookingDialog open={bookingOpen} onOpenChange={setBookingOpen} />
     </section>
   );
 };

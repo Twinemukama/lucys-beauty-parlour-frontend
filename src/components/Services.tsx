@@ -26,7 +26,7 @@ const services = [
 
 export const Services = () => {
   return (
-    <section className="py-24 px-4 bg-gradient-hero">
+    <section id="services" className="py-24 px-4 bg-gradient-hero">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <h2 className="font-playfair text-5xl md:text-6xl font-bold text-foreground mb-4">
