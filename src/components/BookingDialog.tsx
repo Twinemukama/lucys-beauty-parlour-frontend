@@ -11,12 +11,13 @@ import { cn } from "@/lib/utils";
 interface BookingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  preSelectedService?: string;
 }
 
 const services = [
   { id: "hair", name: "Hair Styling", duration: 60, icon: Scissors },
-  { id: "makeup", name: "Makeup Artistry", duration: 90, icon: Sparkles },
-  { id: "skincare", name: "Skincare Treatment", duration: 75, icon: Heart },
+  { id: "nails", name: "Nail Art", duration: 45, icon: Sparkles },
+  { id: "makeup", name: "Makeup Artistry", duration: 90, icon: Heart },
   { id: "wellness", name: "Wellness & Spa", duration: 120, icon: Flower2 },
 ];
 
@@ -38,9 +39,9 @@ const generateTimeSlots = () => {
   return slots;
 };
 
-export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
-  const [step, setStep] = useState(1);
-  const [selectedService, setSelectedService] = useState<string>("");
+export const BookingDialog = ({ open, onOpenChange, preSelectedService }: BookingDialogProps) => {
+  const [step, setStep] = useState(preSelectedService ? 2 : 1);
+  const [selectedService, setSelectedService] = useState<string>(preSelectedService || "");
   const [selectedStaff, setSelectedStaff] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedTime, setSelectedTime] = useState<string>("");
@@ -74,8 +75,8 @@ export const BookingDialog = ({ open, onOpenChange }: BookingDialogProps) => {
   };
 
   const resetForm = () => {
-    setStep(1);
-    setSelectedService("");
+    setStep(preSelectedService ? 2 : 1);
+    setSelectedService(preSelectedService || "");
     setSelectedStaff("");
     setSelectedDate(undefined);
     setSelectedTime("");
