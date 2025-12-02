@@ -6,23 +6,24 @@ import { Scissors, Sparkles, Droplets, Heart, ArrowRight } from "lucide-react";
 const services = [
   {
     icon: Scissors,
-    title: "Hair Styling",
-    description: "Expert cuts, coloring, and treatments tailored to enhance your natural beauty.",
+    title: "Hair Styling & Braiding",
+    description: "Expert cuts, braids, and styling tailored to enhance your natural beauty.",
   },
   {
-    icon: Sparkles,
+    icon: Heart,
     title: "Makeup Artistry",
     description: "Professional makeup application for any occasion, from natural to glamorous.",
   },
   {
-    icon: Droplets,
-    title: "Skincare",
-    description: "Luxurious facials and treatments to rejuvenate and refresh your complexion.",
+    icon: Sparkles,
+    title: "Nails Studio",
+    description: "Luxurious manicures, pedicures, and nail art to complement your style.",
   },
   {
-    icon: Heart,
-    title: "Wellness",
+    icon: Droplets,
+    title: "Wellness & Spa",
     description: "Relaxing spa treatments designed to nurture your body and soul.",
+    upcoming: true,
   },
 ];
 
@@ -43,9 +44,14 @@ export const Services = () => {
           {services.map((service, index) => (
             <Card
               key={service.title}
-              className="group hover:shadow-elegant transition-smooth border-border bg-card animate-in fade-in slide-in-from-bottom-8 duration-700"
+              className={`group hover:shadow-elegant transition-smooth border-border bg-card animate-in fade-in slide-in-from-bottom-8 duration-700 relative ${'upcoming' in service && service.upcoming ? 'opacity-75' : ''}`}
               style={{ animationDelay: `${index * 100}ms` }}
             >
+              {'upcoming' in service && service.upcoming && (
+                <span className="absolute top-3 right-3 text-xs bg-primary/10 text-primary px-2 py-1 rounded-full z-10">
+                  Coming Soon
+                </span>
+              )}
               <CardContent className="pt-8 pb-6 text-center">
                 <div className="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-primary group-hover:scale-110 transition-smooth">
                   <service.icon className="w-8 h-8 text-primary-foreground" />

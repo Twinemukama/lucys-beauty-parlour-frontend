@@ -9,9 +9,9 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { BookingDialog } from "@/components/BookingDialog";
 
 const categories = [
-  { id: "hair", label: "Hair Styling & Braiding", icon: Scissors },
-  { id: "makeup", label: "Makeup Artistry", icon: Heart },
-  { id: "nails", label: "Nails Studio", icon: Sparkles },
+  { id: "hair", label: "Hair", fullLabel: "Hair Styling & Braiding", icon: Scissors },
+  { id: "makeup", label: "Makeup", fullLabel: "Makeup Artistry", icon: Heart },
+  { id: "nails", label: "Nails", fullLabel: "Nails Studio", icon: Sparkles },
 ];
 
 const galleryItems = {
@@ -78,15 +78,16 @@ export default function ServicesGallery() {
       <section className="py-12 px-4">
         <div className="max-w-7xl mx-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 mb-12">
+            <TabsList className="flex w-full max-w-2xl mx-auto justify-center gap-2 mb-12 h-auto p-2 bg-muted/50">
               {categories.map((category) => (
                 <TabsTrigger
                   key={category.id}
                   value={category.id}
-                  className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  className="flex items-center gap-2 px-4 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md"
                 >
-                  <category.icon className="w-4 h-4" />
-                  <span className="hidden sm:inline">{category.label}</span>
+                  <category.icon className="w-4 h-4 shrink-0" />
+                  <span className="hidden sm:inline whitespace-nowrap">{category.fullLabel}</span>
+                  <span className="sm:hidden">{category.label}</span>
                 </TabsTrigger>
               ))}
             </TabsList>
