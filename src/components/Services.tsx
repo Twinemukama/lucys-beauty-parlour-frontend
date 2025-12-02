@@ -1,5 +1,7 @@
+import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { Scissors, Sparkles, Droplets, Heart } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Scissors, Sparkles, Droplets, Heart, ArrowRight } from "lucide-react";
 
 const services = [
   {
@@ -57,6 +59,15 @@ export const Services = () => {
               </CardContent>
             </Card>
           ))}
+        </div>
+
+        <div className="text-center mt-12 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500">
+          <Link to="/gallery">
+            <Button variant="outline" size="lg" className="gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-smooth">
+              View Our Portfolio
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+          </Link>
         </div>
       </div>
     </section>
