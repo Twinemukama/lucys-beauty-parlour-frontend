@@ -9,27 +9,19 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { BookingDialog } from "@/components/BookingDialog";
 
 const categories = [
-  { id: "hair", label: "Hair Styles", icon: Scissors },
-  { id: "nails", label: "Nail Art", icon: Sparkles },
-  { id: "makeup", label: "Makeup", icon: Heart },
+  { id: "hair", label: "Hair Styling & Braiding", icon: Scissors },
+  { id: "makeup", label: "Makeup Artistry", icon: Heart },
+  { id: "nails", label: "Nails Studio", icon: Sparkles },
 ];
 
 const galleryItems = {
   hair: [
     { id: 1, title: "Elegant Updo", description: "Perfect for weddings and special occasions", image: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=500&fit=crop" },
-    { id: 2, title: "Balayage Highlights", description: "Natural sun-kissed color blend", image: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=500&fit=crop" },
-    { id: 3, title: "Classic Bob", description: "Timeless and sophisticated cut", image: "https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?w=400&h=500&fit=crop" },
+    { id: 2, title: "Box Braids", description: "Protective styling with intricate patterns", image: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=500&fit=crop" },
+    { id: 3, title: "Cornrows", description: "Classic braided elegance", image: "https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?w=400&h=500&fit=crop" },
     { id: 4, title: "Romantic Waves", description: "Soft, flowing curls for any event", image: "https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=400&h=500&fit=crop" },
     { id: 5, title: "Sleek Straight", description: "Glossy, smooth finish", image: "https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=400&h=500&fit=crop" },
     { id: 6, title: "Braided Crown", description: "Intricate braiding artistry", image: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=400&h=500&fit=crop" },
-  ],
-  nails: [
-    { id: 1, title: "French Manicure", description: "Classic elegance for every occasion", image: "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=500&fit=crop" },
-    { id: 2, title: "Gel Art Design", description: "Creative patterns and colors", image: "https://images.unsplash.com/photo-1632345031435-8727f6897d53?w=400&h=500&fit=crop" },
-    { id: 3, title: "Ombre Nails", description: "Gradient color perfection", image: "https://images.unsplash.com/photo-1607779097040-26e80aa78e66?w=400&h=500&fit=crop" },
-    { id: 4, title: "Marble Effect", description: "Luxurious stone-inspired design", image: "https://images.unsplash.com/photo-1519014816548-bf5fe059798b?w=400&h=500&fit=crop" },
-    { id: 5, title: "Glitter Accent", description: "Sparkle and shine", image: "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=500&fit=crop" },
-    { id: 6, title: "Minimalist Lines", description: "Modern geometric elegance", image: "https://images.unsplash.com/photo-1571290274554-6a2eaa771e5f?w=400&h=500&fit=crop" },
   ],
   makeup: [
     { id: 1, title: "Bridal Glam", description: "Radiant looks for your special day", image: "https://images.unsplash.com/photo-1487412912498-0447578fcca8?w=400&h=500&fit=crop" },
@@ -38,6 +30,14 @@ const galleryItems = {
     { id: 4, title: "Bold Lip", description: "Statement color impact", image: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=400&h=500&fit=crop" },
     { id: 5, title: "Dewy Skin", description: "Fresh, luminous complexion", image: "https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=400&h=500&fit=crop" },
     { id: 6, title: "Editorial Look", description: "Creative artistic expression", image: "https://images.unsplash.com/photo-1526510747491-312da4e9b320?w=400&h=500&fit=crop" },
+  ],
+  nails: [
+    { id: 1, title: "French Manicure", description: "Classic elegance for every occasion", image: "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=500&fit=crop" },
+    { id: 2, title: "Gel Art Design", description: "Creative patterns and colors", image: "https://images.unsplash.com/photo-1632345031435-8727f6897d53?w=400&h=500&fit=crop" },
+    { id: 3, title: "Ombre Nails", description: "Gradient color perfection", image: "https://images.unsplash.com/photo-1607779097040-26e80aa78e66?w=400&h=500&fit=crop" },
+    { id: 4, title: "Marble Effect", description: "Luxurious stone-inspired design", image: "https://images.unsplash.com/photo-1519014816548-bf5fe059798b?w=400&h=500&fit=crop" },
+    { id: 5, title: "Glitter Accent", description: "Sparkle and shine", image: "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=500&fit=crop" },
+    { id: 6, title: "Minimalist Lines", description: "Modern geometric elegance", image: "https://images.unsplash.com/photo-1571290274554-6a2eaa771e5f?w=400&h=500&fit=crop" },
   ],
 };
 
@@ -140,7 +140,7 @@ export default function ServicesGallery() {
             className="bg-gradient-primary hover:opacity-90 transition-smooth text-primary-foreground font-medium px-8 py-6 text-lg shadow-elegant"
             onClick={() => setBookingOpen(true)}
           >
-            Book {activeTab === "hair" ? "Hair Styling" : activeTab === "nails" ? "Nail Art" : "Makeup"} Now
+            Book {activeTab === "hair" ? "Hair Styling & Braiding" : activeTab === "nails" ? "Nails Studio" : "Makeup Artistry"} Now
           </Button>
         </div>
       </section>
