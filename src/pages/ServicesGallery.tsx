@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { BookingDialog } from "@/components/BookingDialog";
 
 const categories = [
   { id: "hair", label: "Hair Styles", icon: Scissors },
@@ -42,6 +43,8 @@ const galleryItems = {
 
 export default function ServicesGallery() {
   const [selectedImage, setSelectedImage] = useState<{ title: string; image: string; description: string } | null>(null);
+  const [activeTab, setActiveTab] = useState("hair");
+  const [bookingOpen, setBookingOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
@@ -74,7 +77,7 @@ export default function ServicesGallery() {
       {/* Gallery Tabs */}
       <section className="py-12 px-4">
         <div className="max-w-7xl mx-auto">
-          <Tabs defaultValue="hair" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 mb-12">
               {categories.map((category) => (
                 <TabsTrigger
@@ -132,11 +135,13 @@ export default function ServicesGallery() {
           <p className="font-inter text-muted-foreground mb-8">
             Book an appointment and let our expert stylists create your perfect look
           </p>
-          <Link to="/">
-            <Button size="lg" className="bg-gradient-primary hover:opacity-90 transition-smooth text-primary-foreground font-medium px-8 py-6 text-lg shadow-elegant">
-              Book Now
-            </Button>
-          </Link>
+          <Button 
+            size="lg" 
+            className="bg-gradient-primary hover:opacity-90 transition-smooth text-primary-foreground font-medium px-8 py-6 text-lg shadow-elegant"
+            onClick={() => setBookingOpen(true)}
+          >
+            Book {activeTab === "hair" ? "Hair Styling" : activeTab === "nails" ? "Nail Art" : "Makeup"} Now
+          </Button>
         </div>
       </section>
 
@@ -162,6 +167,13 @@ export default function ServicesGallery() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Booking Dialog */}
+      <BookingDialog 
+        open={bookingOpen} 
+        onOpenChange={setBookingOpen} 
+        preSelectedService={activeTab}
+      />
     </div>
   );
 }
