@@ -15,10 +15,10 @@ interface BookingDialogProps {
 }
 
 const services = [
-  { id: "hair", name: "Hair Styling", duration: 60, icon: Scissors },
-  { id: "nails", name: "Nail Art", duration: 45, icon: Sparkles },
+  { id: "hair", name: "Hair Styling & Braiding", duration: 60, icon: Scissors },
   { id: "makeup", name: "Makeup Artistry", duration: 90, icon: Heart },
-  { id: "wellness", name: "Wellness & Spa", duration: 120, icon: Flower2 },
+  { id: "nails", name: "Nails Studio", duration: 45, icon: Sparkles },
+  { id: "wellness", name: "Wellness & Spa", duration: 120, icon: Flower2, upcoming: true },
 ];
 
 const staff = [
@@ -101,17 +101,27 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService }: Bookin
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {services.map((service) => {
                   const Icon = service.icon;
+                  const isUpcoming = 'upcoming' in service && service.upcoming;
                   return (
                     <button
                       key={service.id}
-                      onClick={() => setSelectedService(service.id)}
+                      onClick={() => !isUpcoming && setSelectedService(service.id)}
+                      disabled={isUpcoming}
                       className={cn(
-                        "p-6 rounded-lg border-2 transition-smooth text-left hover:border-primary",
+                        "p-6 rounded-lg border-2 transition-smooth text-left relative",
+                        isUpcoming 
+                          ? "border-border bg-muted/50 cursor-not-allowed opacity-60"
+                          : "hover:border-primary",
                         selectedService === service.id
                           ? "border-primary bg-primary/5"
                           : "border-border bg-card"
                       )}
                     >
+                      {isUpcoming && (
+                        <span className="absolute top-2 right-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                          Coming Soon
+                        </span>
+                      )}
                       <Icon className="w-8 h-8 text-primary mb-3" />
                       <h3 className="font-playfair text-xl mb-2">{service.name}</h3>
                       <p className="text-sm text-muted-foreground">{service.duration} minutes</p>
