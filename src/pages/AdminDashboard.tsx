@@ -1,18 +1,32 @@
-import { useState } from "react";
-import { Calendar as CalendarIcon, Clock, Users, Plus, Search, Filter } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Calendar as CalendarIcon, Clock, Users, Plus, Search, Filter, LogOut } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppointmentCalendar } from "@/components/admin/AppointmentCalendar";
 import { AppointmentList } from "@/components/admin/AppointmentList";
 import { AddAppointmentDialog } from "@/components/admin/AddAppointmentDialog";
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+
+  // Check authentication - redirect to login if not authenticated
+  useEffect(() => {
+    const isAuth = localStorage.getItem("adminAuth");
+    if (!isAuth) {
+      navigate("/admin/login");
+    }
+  }, [navigate]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("adminAuth");
+    navigate("/admin/login");
+  };
 
   // Mock stats data
   const stats = [
@@ -31,10 +45,16 @@ const AdminDashboard = () => {
               <h1 className="text-3xl font-playfair font-bold text-foreground">Admin Dashboard</h1>
               <p className="text-muted-foreground">Lucy's Beauty Parlour</p>
             </div>
-            <Button onClick={() => setAddDialogOpen(true)} className="gap-2">
-              <Plus className="h-4 w-4" />
-              New Appointment
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button onClick={() => setAddDialogOpen(true)} className="gap-2">
+                <Plus className="h-4 w-4" />
+                New Appointment
+              </Button>
+              <Button variant="outline" onClick={handleLogout} className="gap-2">
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </header>
