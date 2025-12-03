@@ -17,6 +17,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { MoreHorizontal, Eye, Edit, Trash, CheckCircle, XCircle } from "lucide-react";
 import { CustomerDetailsDialog } from "./CustomerDetailsDialog";
 import { EditAppointmentDialog, Appointment } from "./EditAppointmentDialog";
@@ -24,6 +32,8 @@ import { EditAppointmentDialog, Appointment } from "./EditAppointmentDialog";
 interface AppointmentListProps {
   searchQuery: string;
 }
+
+const ITEMS_PER_PAGE = 5;
 
 // Mock appointments data
 const mockAppointments = [
@@ -87,6 +97,42 @@ const mockAppointments = [
     status: "pending",
     notes: "Wedding makeup",
   },
+  {
+    id: "6",
+    date: "2025-01-17",
+    time: "01:00 PM",
+    customerName: "Monica Geller",
+    customerEmail: "monica@example.com",
+    customerPhone: "+1 234 567 8906",
+    service: "Hair Styling",
+    staff: "Sophie",
+    status: "confirmed",
+    notes: "",
+  },
+  {
+    id: "7",
+    date: "2025-01-18",
+    time: "10:30 AM",
+    customerName: "Phoebe Buffay",
+    customerEmail: "phoebe@example.com",
+    customerPhone: "+1 234 567 8907",
+    service: "Facial Treatment",
+    staff: "Emma",
+    status: "pending",
+    notes: "Prefers organic products",
+  },
+  {
+    id: "8",
+    date: "2025-01-18",
+    time: "03:00 PM",
+    customerName: "Chandler Bing",
+    customerEmail: "chandler@example.com",
+    customerPhone: "+1 234 567 8908",
+    service: "Hair Styling",
+    staff: "Sophie",
+    status: "cancelled",
+    notes: "Rescheduled",
+  },
 ];
 
 export function AppointmentList({ searchQuery }: AppointmentListProps) {
@@ -94,6 +140,7 @@ export function AppointmentList({ searchQuery }: AppointmentListProps) {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [editAppointment, setEditAppointment] = useState<Appointment | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const handleEditAppointment = (appointment: typeof mockAppointments[0]) => {
     setEditAppointment(appointment as Appointment);
@@ -110,6 +157,15 @@ export function AppointmentList({ searchQuery }: AppointmentListProps) {
       appointment.service.toLowerCase().includes(query)
     );
   });
+
+  // Reset to first page when search query changes
+  const totalPages = Math.ceil(filteredAppointments.length / ITEMS_PER_PAGE);
+  const validCurrentPage = Math.min(currentPage, Math.max(1, totalPages));
+  
+  const paginatedAppointments = filteredAppointments.slice(
+    (validCurrentPage - 1) * ITEMS_PER_PAGE,
+    validCurrentPage * ITEMS_PER_PAGE
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -146,7 +202,7 @@ export function AppointmentList({ searchQuery }: AppointmentListProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredAppointments.map((appointment) => (
+            {paginatedAppointments.map((appointment) => (
               <TableRow key={appointment.id} className="hover:bg-muted/30">
                 <TableCell>
                   <div className="flex flex-col">
@@ -215,6 +271,42 @@ export function AppointmentList({ searchQuery }: AppointmentListProps) {
           </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-sm text-muted-foreground">
+            Showing {((validCurrentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(validCurrentPage * ITEMS_PER_PAGE, filteredAppointments.length)} of {filteredAppointments.length} appointments
+          </p>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  className={validCurrentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(page)}
+                    isActive={page === validCurrentPage}
+                    className="cursor-pointer"
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <PaginationNext 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  className={validCurrentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
       {/* Customer Details Dialog */}
       <CustomerDetailsDialog
