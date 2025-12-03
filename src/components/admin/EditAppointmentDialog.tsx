@@ -102,10 +102,17 @@ export function EditAppointmentDialog({
         status: appointment.status,
         notes: appointment.notes || "",
       });
-      // Parse the date string (assuming format like "Dec 3, 2024")
+      // Parse the date string - try ISO format first, then other formats
       try {
-        const parsedDate = parse(appointment.date, "MMM d, yyyy", new Date());
-        setDate(parsedDate);
+        let parsedDate = new Date(appointment.date);
+        if (isNaN(parsedDate.getTime())) {
+          parsedDate = parse(appointment.date, "MMM d, yyyy", new Date());
+        }
+        if (!isNaN(parsedDate.getTime())) {
+          setDate(parsedDate);
+        } else {
+          setDate(undefined);
+        }
       } catch {
         setDate(undefined);
       }
