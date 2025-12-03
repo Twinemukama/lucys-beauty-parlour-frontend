@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Eye, Edit, Trash, CheckCircle, XCircle } from "lucide-react";
 import { CustomerDetailsDialog } from "./CustomerDetailsDialog";
+import { EditAppointmentDialog, Appointment } from "./EditAppointmentDialog";
 
 interface AppointmentListProps {
   searchQuery: string;
@@ -91,6 +92,13 @@ const mockAppointments = [
 export function AppointmentList({ searchQuery }: AppointmentListProps) {
   const [selectedCustomer, setSelectedCustomer] = useState<typeof mockAppointments[0] | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [editAppointment, setEditAppointment] = useState<Appointment | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+
+  const handleEditAppointment = (appointment: typeof mockAppointments[0]) => {
+    setEditAppointment(appointment as Appointment);
+    setEditOpen(true);
+  };
 
   const filteredAppointments = mockAppointments.filter((appointment) => {
     if (!searchQuery) return true;
@@ -173,7 +181,7 @@ export function AppointmentList({ searchQuery }: AppointmentListProps) {
                         <Eye className="mr-2 h-4 w-4" />
                         View Details
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleEditAppointment(appointment)}>
                         <Edit className="mr-2 h-4 w-4" />
                         Edit
                       </DropdownMenuItem>
@@ -213,6 +221,13 @@ export function AppointmentList({ searchQuery }: AppointmentListProps) {
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
         customer={selectedCustomer}
+      />
+
+      {/* Edit Appointment Dialog */}
+      <EditAppointmentDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        appointment={editAppointment}
       />
     </>
   );
