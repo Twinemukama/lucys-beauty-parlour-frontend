@@ -2,12 +2,26 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Clock, Mail, Phone, User } from "lucide-react";
+import { Clock, Mail, Phone, User, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useState, useEffect, useCallback } from "react";
+
+interface Appointment {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  service: string;
+  time: string;
+  status: string;
+  staff: string;
+  date: Date;
+}
 
 interface AppointmentCalendarProps {
   selectedDate: Date | undefined;
   onSelectDate: (date: Date | undefined) => void;
+  onViewAppointment?: (appointment: Appointment) => void;
 }
 
 // Mock appointment data
@@ -58,7 +72,36 @@ const mockAppointments = [
   },
 ];
 
-export function AppointmentCalendar({ selectedDate, onSelectDate }: AppointmentCalendarProps) {
+const ITEMS_PER_LOAD = 15;
+
+export function AppointmentCalendar({ selectedDate, onSelectDate, onViewAppointment }: AppointmentCalendarProps) {
+  const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_LOAD);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Reset displayed count when date changes
+  useEffect(() => {
+    setDisplayedCount(ITEMS_PER_LOAD);
+  }, [selectedDate]);
+
+  const displayedAppointments = mockAppointments.slice(0, displayedCount);
+  const hasMore = displayedCount < mockAppointments.length;
+
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLDivElement;
+    const scrollHeight = target.scrollHeight;
+    const scrollTop = target.scrollTop;
+    const clientHeight = target.clientHeight;
+    
+    if (scrollHeight - scrollTop - clientHeight < 100 && hasMore && !isLoading) {
+      setIsLoading(true);
+      // Simulate loading delay
+      setTimeout(() => {
+        setDisplayedCount(prev => Math.min(prev + ITEMS_PER_LOAD, mockAppointments.length));
+        setIsLoading(false);
+      }, 300);
+    }
+  }, [hasMore, isLoading]);
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "confirmed":
@@ -113,9 +156,9 @@ export function AppointmentCalendar({ selectedDate, onSelectDate }: AppointmentC
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[400px] pr-4">
+            <ScrollArea className="h-[400px] pr-4" onScrollCapture={handleScroll}>
               <div className="space-y-4">
-                {mockAppointments.map((appointment) => (
+                {displayedAppointments.map((appointment) => (
                   <Card key={appointment.id} className="border-l-4 border-l-primary shadow-soft">
                     <CardContent className="pt-6">
                       <div className="flex flex-col gap-4">
@@ -157,17 +200,26 @@ export function AppointmentCalendar({ selectedDate, onSelectDate }: AppointmentC
                               </>
                             )}
                           </div>
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm">View</Button>
-                            <Button variant="outline" size="sm">Edit</Button>
-                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => onViewAppointment?.(appointment)}
+                          >
+                            View
+                          </Button>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
                 ))}
 
-                {mockAppointments.length === 0 && (
+                {isLoading && (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                )}
+
+                {displayedAppointments.length === 0 && (
                   <div className="text-center py-12 text-muted-foreground">
                     No appointments scheduled for this date
                   </div>
