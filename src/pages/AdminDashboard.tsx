@@ -9,6 +9,32 @@ import { AppointmentCalendar } from "@/components/admin/AppointmentCalendar";
 import { AppointmentList } from "@/components/admin/AppointmentList";
 import { AddAppointmentDialog } from "@/components/admin/AddAppointmentDialog";
 import { AddPortfolioDialog } from "@/components/admin/AddPortfolioDialog";
+import { CustomerDetailsDialog } from "@/components/admin/CustomerDetailsDialog";
+
+interface CalendarAppointment {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  service: string;
+  time: string;
+  status: string;
+  staff: string;
+  date: Date;
+}
+
+interface CustomerDetails {
+  id: string;
+  date: string;
+  time: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  service: string;
+  staff: string;
+  status: string;
+  notes: string;
+}
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -16,6 +42,30 @@ const AdminDashboard = () => {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [portfolioDialogOpen, setPortfolioDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [customerDetailsOpen, setCustomerDetailsOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerDetails | null>(null);
+
+  const handleViewCalendarAppointment = (appointment: CalendarAppointment) => {
+    const customerDetails: CustomerDetails = {
+      id: appointment.id,
+      date: appointment.date.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        month: 'long', 
+        day: 'numeric',
+        year: 'numeric'
+      }),
+      time: appointment.time,
+      customerName: appointment.customerName,
+      customerEmail: appointment.customerEmail,
+      customerPhone: appointment.customerPhone,
+      service: appointment.service,
+      staff: appointment.staff,
+      status: appointment.status,
+      notes: "",
+    };
+    setSelectedCustomer(customerDetails);
+    setCustomerDetailsOpen(true);
+  };
 
   // Check authentication - redirect to login if not authenticated
   useEffect(() => {
@@ -121,6 +171,7 @@ const AdminDashboard = () => {
                 <AppointmentCalendar 
                   selectedDate={selectedDate} 
                   onSelectDate={setSelectedDate}
+                  onViewAppointment={handleViewCalendarAppointment}
                 />
               </CardContent>
             </Card>
@@ -145,6 +196,13 @@ const AdminDashboard = () => {
       
       {/* Add Portfolio Dialog */}
       <AddPortfolioDialog open={portfolioDialogOpen} onOpenChange={setPortfolioDialogOpen} />
+
+      {/* Customer Details Dialog */}
+      <CustomerDetailsDialog 
+        open={customerDetailsOpen} 
+        onOpenChange={setCustomerDetailsOpen} 
+        customer={selectedCustomer}
+      />
     </div>
   );
 };
