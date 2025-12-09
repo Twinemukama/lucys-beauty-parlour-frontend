@@ -4,10 +4,13 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Calendar, Clock, Mail, Phone, User, FileText, Briefcase } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar, Clock, Mail, Phone, User, FileText, Briefcase, CheckCircle, XCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Customer {
   id: string;
@@ -26,10 +29,39 @@ interface CustomerDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   customer: Customer | null;
+  onConfirm?: (id: string) => void;
+  onCancel?: (id: string) => void;
 }
 
-export function CustomerDetailsDialog({ open, onOpenChange, customer }: CustomerDetailsDialogProps) {
+export function CustomerDetailsDialog({ open, onOpenChange, customer, onConfirm, onCancel }: CustomerDetailsDialogProps) {
+  const { toast } = useToast();
+  
   if (!customer) return null;
+
+  const handleConfirm = () => {
+    if (onConfirm) {
+      onConfirm(customer.id);
+    } else {
+      toast({
+        title: "Appointment Confirmed",
+        description: `Appointment for ${customer.customerName} has been confirmed.`,
+      });
+    }
+    onOpenChange(false);
+  };
+
+  const handleCancel = () => {
+    if (onCancel) {
+      onCancel(customer.id);
+    } else {
+      toast({
+        title: "Appointment Cancelled",
+        description: `Appointment for ${customer.customerName} has been cancelled.`,
+        variant: "destructive",
+      });
+    }
+    onOpenChange(false);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -150,6 +182,24 @@ export function CustomerDetailsDialog({ open, onOpenChange, customer }: Customer
             </>
           )}
         </div>
+
+        {/* Action buttons for pending appointments */}
+        {customer.status === "pending" && (
+          <DialogFooter className="mt-6 gap-2 sm:gap-0">
+            <Button 
+              variant="outline" 
+              onClick={handleCancel}
+              className="text-destructive hover:text-destructive"
+            >
+              <XCircle className="mr-2 h-4 w-4" />
+              Cancel Appointment
+            </Button>
+            <Button onClick={handleConfirm}>
+              <CheckCircle className="mr-2 h-4 w-4" />
+              Confirm Appointment
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );
