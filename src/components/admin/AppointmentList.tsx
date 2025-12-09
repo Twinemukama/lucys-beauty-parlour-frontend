@@ -237,10 +237,12 @@ export function AppointmentList({ searchQuery }: AppointmentListProps) {
                         <Eye className="mr-2 h-4 w-4" />
                         View Details
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleEditAppointment(appointment)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
+                      {appointment.status !== "confirmed" && appointment.status !== "cancelled" && (
+                        <DropdownMenuItem onClick={() => handleEditAppointment(appointment)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuSeparator />
                       {appointment.status === "pending" && (
                         <DropdownMenuItem>
@@ -248,15 +250,21 @@ export function AppointmentList({ searchQuery }: AppointmentListProps) {
                           Confirm
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuItem className="text-destructive">
-                        <XCircle className="mr-2 h-4 w-4" />
-                        Cancel
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-destructive">
-                        <Trash className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
+                      {appointment.status !== "cancelled" && (
+                        <DropdownMenuItem className="text-destructive">
+                          <XCircle className="mr-2 h-4 w-4" />
+                          Cancel
+                        </DropdownMenuItem>
+                      )}
+                      {appointment.status !== "confirmed" && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-destructive">
+                            <Trash className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
