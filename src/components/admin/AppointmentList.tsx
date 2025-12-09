@@ -28,9 +28,14 @@ import {
 import { MoreHorizontal, Eye, Edit, Trash, CheckCircle, XCircle } from "lucide-react";
 import { CustomerDetailsDialog } from "./CustomerDetailsDialog";
 import { EditAppointmentDialog, Appointment } from "./EditAppointmentDialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface AppointmentListProps {
   searchQuery: string;
+  onOpenChange?: (open: boolean) => void;
+  customer: typeof mockAppointments[3] | null;
+  onConfirm?: (customerId: string) => void;
+  onCancel?: (customerId: string) => void;
 }
 
 const ITEMS_PER_PAGE = 5;
@@ -135,12 +140,13 @@ const mockAppointments = [
   },
 ];
 
-export function AppointmentList({ searchQuery }: AppointmentListProps) {
+export function AppointmentList({ searchQuery, onOpenChange, customer, onConfirm, onCancel }: AppointmentListProps) {
   const [selectedCustomer, setSelectedCustomer] = useState<typeof mockAppointments[0] | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [editAppointment, setEditAppointment] = useState<Appointment | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const { toast } = useToast();
 
   const handleEditAppointment = (appointment: typeof mockAppointments[0]) => {
     setEditAppointment(appointment as Appointment);
@@ -158,10 +164,34 @@ export function AppointmentList({ searchQuery }: AppointmentListProps) {
     );
   });
 
+  const handleConfirm = (appointment: typeof mockAppointments[0]) => {
+    if (onConfirm) {
+      onConfirm(appointment.id);
+    } else {
+      toast({
+        title: "Appointment Confirmed",
+        description: `Appointment for ${appointment.customerName} has been confirmed.`,
+      });
+    }
+  };
+
+  const handleCancel = (appointment: typeof mockAppointments[0]) => {
+    if (onCancel) {
+      onCancel(appointment.id);
+    } else {
+      toast({
+        title: "Appointment Cancelled",
+        description: `Appointment for ${appointment.customerName} has been cancelled.`,
+        variant: "destructive",
+      });
+    }
+  };
+
+
   // Reset to first page when search query changes
   const totalPages = Math.ceil(filteredAppointments.length / ITEMS_PER_PAGE);
   const validCurrentPage = Math.min(currentPage, Math.max(1, totalPages));
-  
+
   const paginatedAppointments = filteredAppointments.slice(
     (validCurrentPage - 1) * ITEMS_PER_PAGE,
     validCurrentPage * ITEMS_PER_PAGE
@@ -244,18 +274,21 @@ export function AppointmentList({ searchQuery }: AppointmentListProps) {
                         </DropdownMenuItem>
                       )}
                       <DropdownMenuSeparator />
-                      {appointment.status === "pending" && (
-                        <DropdownMenuItem>
-                          <CheckCircle className="mr-2 h-4 w-4" />
-                          Confirm
-                        </DropdownMenuItem>
-                      )}
+                      {
+                        appointment.status === "pending" && (
+                          <DropdownMenuItem onClick={() => handleConfirm(appointment)}>
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Confirm
+                          </DropdownMenuItem>
+                        )
+                      }
                       {appointment.status !== "cancelled" && (
-                        <DropdownMenuItem className="text-destructive">
+                        <DropdownMenuItem onClick={() => handleCancel(appointment)} className="text-destructive">
                           <XCircle className="mr-2 h-4 w-4" />
                           Cancel
                         </DropdownMenuItem>
                       )}
+
                       {appointment.status !== "confirmed" && (
                         <>
                           <DropdownMenuSeparator />
@@ -289,7 +322,7 @@ export function AppointmentList({ searchQuery }: AppointmentListProps) {
           <Pagination>
             <PaginationContent>
               <PaginationItem>
-                <PaginationPrevious 
+                <PaginationPrevious
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   className={validCurrentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
                 />
@@ -306,7 +339,7 @@ export function AppointmentList({ searchQuery }: AppointmentListProps) {
                 </PaginationItem>
               ))}
               <PaginationItem>
-                <PaginationNext 
+                <PaginationNext
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                   className={validCurrentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
                 />
