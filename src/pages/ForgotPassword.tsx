@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, ArrowLeft } from "lucide-react";
@@ -10,11 +8,9 @@ import { Mail, ArrowLeft } from "lucide-react";
 export default function ForgotPassword() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState("");
   const [emailSent, setEmailSent] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleResetRequest = async () => {
     setIsLoading(true);
 
     // TODO: Replace with actual password reset API call
@@ -22,7 +18,7 @@ export default function ForgotPassword() {
       setEmailSent(true);
       toast({
         title: "Reset link sent",
-        description: "Please check your email for the password reset link.",
+        description: "Please check your admin email for the password reset link.",
       });
       setIsLoading(false);
     }, 1000);
@@ -42,12 +38,12 @@ export default function ForgotPassword() {
         <Card className="border-border/50 shadow-elegant">
           <CardHeader className="text-center pb-4">
             <CardTitle className="text-2xl font-playfair">
-              {emailSent ? "Check Your Email" : "Forgot Password?"}
+              {emailSent ? "Check Your Email" : "Reset Password"}
             </CardTitle>
             <CardDescription>
               {emailSent
-                ? "We've sent a password reset link to your email address."
-                : "Enter your email address and we'll send you a link to reset your password."}
+                ? "We've sent a password reset link to your registered admin email address."
+                : "Click below to receive a password reset link at your registered admin email."}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -75,24 +71,12 @@ export default function ForgotPassword() {
                 </Link>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="admin@lucysbeauty.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <Button type="submit" className="w-full" disabled={isLoading}>
+              <div className="space-y-5">
+                <Button 
+                  onClick={handleResetRequest} 
+                  className="w-full" 
+                  disabled={isLoading}
+                >
                   {isLoading ? "Sending..." : "Send Reset Link"}
                 </Button>
 
@@ -102,7 +86,7 @@ export default function ForgotPassword() {
                     Back to Login
                   </Button>
                 </Link>
-              </form>
+              </div>
             )}
           </CardContent>
         </Card>
