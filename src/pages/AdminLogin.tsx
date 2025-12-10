@@ -101,12 +101,12 @@ export default function AdminLogin() {
               </div>
 
               <div className="flex items-center justify-end">
-                <button
-                  type="button"
+                <a
+                  href="/admin/forgot-password"
                   className="text-sm text-primary hover:underline"
                 >
                   Forgot password?
-                </button>
+                </a>
               </div>
 
               <Button type="submit" className="w-full" disabled={isLoading}>
