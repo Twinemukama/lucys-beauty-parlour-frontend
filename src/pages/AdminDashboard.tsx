@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar as CalendarIcon, Clock, Users, Plus, Search, Filter, LogOut, ImagePlus } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Users, Plus, Search, Filter, LogOut, ImagePlus, Key } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { AppointmentList } from "@/components/admin/AppointmentList";
 import { AddAppointmentDialog } from "@/components/admin/AddAppointmentDialog";
 import { AddPortfolioDialog } from "@/components/admin/AddPortfolioDialog";
 import { CustomerDetailsDialog } from "@/components/admin/CustomerDetailsDialog";
+import { ChangePasswordDialog } from "@/components/admin/ChangePasswordDialog";
 
 interface CalendarAppointment {
   id: string;
@@ -44,6 +45,7 @@ const AdminDashboard = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [customerDetailsOpen, setCustomerDetailsOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerDetails | null>(null);
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
 
   const handleViewCalendarAppointment = (appointment: CalendarAppointment) => {
     const customerDetails: CustomerDetails = {
@@ -105,6 +107,10 @@ const AdminDashboard = () => {
               <Button variant="secondary" onClick={() => setPortfolioDialogOpen(true)} className="gap-2">
                 <ImagePlus className="h-4 w-4" />
                 Add Portfolio
+              </Button>
+              <Button variant="ghost" onClick={() => setChangePasswordOpen(true)} className="gap-2">
+                <Key className="h-4 w-4" />
+                Change Password
               </Button>
               <Button variant="outline" onClick={handleLogout} className="gap-2">
                 <LogOut className="h-4 w-4" />
@@ -202,6 +208,12 @@ const AdminDashboard = () => {
         open={customerDetailsOpen} 
         onOpenChange={setCustomerDetailsOpen} 
         customer={selectedCustomer}
+      />
+
+      {/* Change Password Dialog */}
+      <ChangePasswordDialog 
+        open={changePasswordOpen} 
+        onOpenChange={setChangePasswordOpen} 
       />
     </div>
   );

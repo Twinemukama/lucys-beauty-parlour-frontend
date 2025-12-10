@@ -32,8 +32,6 @@ import { useToast } from "@/hooks/use-toast";
 
 interface AppointmentListProps {
   searchQuery: string;
-  onOpenChange?: (open: boolean) => void;
-  customer: typeof mockAppointments[3] | null;
   onConfirm?: (customerId: string) => void;
   onCancel?: (customerId: string) => void;
 }
@@ -140,7 +138,7 @@ const mockAppointments = [
   },
 ];
 
-export function AppointmentList({ searchQuery, onOpenChange, customer, onConfirm, onCancel }: AppointmentListProps) {
+export function AppointmentList({ searchQuery, onConfirm, onCancel }: AppointmentListProps) {
   const [selectedCustomer, setSelectedCustomer] = useState<typeof mockAppointments[0] | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [editAppointment, setEditAppointment] = useState<Appointment | null>(null);
