@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Scissors, Heart, Sparkles, ImagePlus } from "lucide-react";
+import { useState, useRef } from "react";
+import { Scissors, Heart, Sparkles, ImagePlus, Upload, Plus, Check, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -18,7 +17,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "@/components/ui/command";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface AddPortfolioDialogProps {
   open: boolean;
@@ -31,20 +45,59 @@ const serviceCategories = [
   { id: "nails", label: "Nails Studio", icon: Sparkles },
 ];
 
+// Mock styles data - replace with actual database fetch
+const stylesByCategory: Record<string, string[]> = {
+  hair: ["Box Braids", "Cornrows", "Goddess Locs", "Knotless Braids", "Twist Out", "Silk Press", "Updo"],
+  makeup: ["Bridal Glam", "Natural Beat", "Smoky Eye", "Editorial", "Soft Glam", "Cut Crease"],
+  nails: ["French Tips", "Gel Overlay", "Nail Art", "Acrylic Extensions", "Chrome Finish", "Ombre"],
+};
+
 export function AddPortfolioDialog({ open, onOpenChange }: AddPortfolioDialogProps) {
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     category: "",
-    title: "",
-    description: "",
-    imageUrl: "",
+    style: "",
+    imageFile: null as File | null,
   });
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [stylePopoverOpen, setStylePopoverOpen] = useState(false);
+  const [newStyleInput, setNewStyleInput] = useState("");
+  const [customStyles, setCustomStyles] = useState<Record<string, string[]>>({
+    hair: [],
+    makeup: [],
+    nails: [],
+  });
+
+  const availableStyles = formData.category
+    ? [...(stylesByCategory[formData.category] || []), ...(customStyles[formData.category] || [])]
+    : [];
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload an image file.",
+          variant: "destructive",
+        });
+        return;
+      }
+      setFormData(prev => ({ ...prev, imageFile: file }));
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.category || !formData.title || !formData.description || !formData.imageUrl) {
+    if (!formData.category || !formData.style || !formData.imageFile) {
       toast({
         title: "Missing fields",
         description: "Please fill in all required fields.",
@@ -60,16 +113,51 @@ export function AddPortfolioDialog({ open, onOpenChange }: AddPortfolioDialogPro
     
     toast({
       title: "Portfolio item added",
-      description: `"${formData.title}" has been added to ${serviceCategories.find(c => c.id === formData.category)?.label}.`,
+      description: `"${formData.style}" has been added to ${serviceCategories.find(c => c.id === formData.category)?.label}.`,
     });
     
-    setFormData({ category: "", title: "", description: "", imageUrl: "" });
+    handleReset();
     setIsSubmitting(false);
     onOpenChange(false);
   };
 
   const handleReset = () => {
-    setFormData({ category: "", title: "", description: "", imageUrl: "" });
+    setFormData({ category: "", style: "", imageFile: null });
+    setImagePreview(null);
+    setNewStyleInput("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleAddNewStyle = () => {
+    if (!newStyleInput.trim() || !formData.category) return;
+    
+    const trimmedStyle = newStyleInput.trim();
+    
+    // Check if style already exists
+    if (availableStyles.some(s => s.toLowerCase() === trimmedStyle.toLowerCase())) {
+      toast({
+        title: "Style exists",
+        description: "This style already exists in the list.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setCustomStyles(prev => ({
+      ...prev,
+      [formData.category]: [...(prev[formData.category] || []), trimmedStyle],
+    }));
+    
+    setFormData(prev => ({ ...prev, style: trimmedStyle }));
+    setNewStyleInput("");
+    setStylePopoverOpen(false);
+    
+    toast({
+      title: "Style added",
+      description: `"${trimmedStyle}" has been added and selected.`,
+    });
   };
 
   const selectedCategory = serviceCategories.find(c => c.id === formData.category);
@@ -92,7 +180,7 @@ export function AddPortfolioDialog({ open, onOpenChange }: AddPortfolioDialogPro
             </Label>
             <Select
               value={formData.category}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, category: value, style: "" }))}
             >
               <SelectTrigger id="category" className="w-full">
                 <SelectValue placeholder="Select a service category" />
@@ -115,73 +203,133 @@ export function AddPortfolioDialog({ open, onOpenChange }: AddPortfolioDialogPro
             )}
           </div>
 
-          {/* Title */}
+          {/* Style Selection with Inline Creation */}
           <div className="space-y-2">
-            <Label htmlFor="title" className="text-sm font-medium">
-              Title <span className="text-destructive">*</span>
+            <Label className="text-sm font-medium">
+              Style <span className="text-destructive">*</span>
             </Label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="e.g., Elegant Updo, Bridal Glam"
-              maxLength={50}
-            />
-            <p className="text-xs text-muted-foreground">{formData.title.length}/50 characters</p>
+            <Popover open={stylePopoverOpen} onOpenChange={setStylePopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={stylePopoverOpen}
+                  className="w-full justify-between"
+                  disabled={!formData.category}
+                >
+                  {formData.style || "Select or create a style..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                <Command>
+                  <CommandInput 
+                    placeholder="Search or type new style..." 
+                    value={newStyleInput}
+                    onValueChange={setNewStyleInput}
+                  />
+                  <CommandList>
+                    <CommandEmpty className="p-2">
+                      <div className="flex flex-col gap-2">
+                        <p className="text-sm text-muted-foreground">No style found.</p>
+                        {newStyleInput.trim() && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="w-full justify-start"
+                            onClick={handleAddNewStyle}
+                          >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Create "{newStyleInput.trim()}"
+                          </Button>
+                        )}
+                      </div>
+                    </CommandEmpty>
+                    <CommandGroup heading="Available Styles">
+                      {availableStyles.map((style) => (
+                        <CommandItem
+                          key={style}
+                          value={style}
+                          onSelect={() => {
+                            setFormData(prev => ({ ...prev, style }));
+                            setStylePopoverOpen(false);
+                            setNewStyleInput("");
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              formData.style === style ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {style}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    {newStyleInput.trim() && !availableStyles.some(s => 
+                      s.toLowerCase() === newStyleInput.trim().toLowerCase()
+                    ) && (
+                      <>
+                        <CommandSeparator />
+                        <CommandGroup heading="Create New">
+                          <CommandItem onSelect={handleAddNewStyle}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Create "{newStyleInput.trim()}"
+                          </CommandItem>
+                        </CommandGroup>
+                      </>
+                    )}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            {!formData.category && (
+              <p className="text-xs text-muted-foreground">
+                Select a service category first to see available styles.
+              </p>
+            )}
           </div>
 
-          {/* Description */}
+          {/* Image Upload */}
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-sm font-medium">
-              Description <span className="text-destructive">*</span>
+            <Label className="text-sm font-medium">
+              Image <span className="text-destructive">*</span>
             </Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Brief description of the work (e.g., Perfect for weddings and special occasions)"
-              maxLength={150}
-              rows={3}
-            />
-            <p className="text-xs text-muted-foreground">{formData.description.length}/150 characters</p>
-          </div>
-
-          {/* Image URL */}
-          <div className="space-y-2">
-            <Label htmlFor="imageUrl" className="text-sm font-medium">
-              Image URL <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="imageUrl"
-              type="url"
-              value={formData.imageUrl}
-              onChange={(e) => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
-              placeholder="https://example.com/image.jpg"
-            />
-            <p className="text-xs text-muted-foreground">
-              Enter a direct link to the image. Recommended size: 400x500px
-            </p>
-          </div>
-
-          {/* Image Preview */}
-          {formData.imageUrl && (
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Preview</Label>
-              <div className="relative aspect-[4/5] max-w-[200px] rounded-lg overflow-hidden border border-border bg-muted">
-                <img
-                  src={formData.imageUrl}
-                  alt="Preview"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-                <div className="absolute inset-0 flex items-center justify-center bg-muted/80 opacity-0 hover:opacity-100 transition-opacity">
-                  <ImagePlus className="h-8 w-8 text-muted-foreground" />
+            <div 
+              className={cn(
+                "relative border-2 border-dashed rounded-lg p-6 transition-colors cursor-pointer hover:border-primary/50",
+                imagePreview ? "border-primary" : "border-border"
+              )}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+              {imagePreview ? (
+                <div className="relative aspect-[4/5] max-w-[200px] mx-auto rounded-lg overflow-hidden">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center bg-background/80 opacity-0 hover:opacity-100 transition-opacity">
+                    <p className="text-sm font-medium">Click to change</p>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                  <Upload className="h-10 w-10" />
+                  <p className="text-sm font-medium">Click to upload image</p>
+                  <p className="text-xs">Recommended size: 400x500px</p>
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
