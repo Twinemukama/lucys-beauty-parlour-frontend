@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { adminLogin, setAdminAccessToken } from "@/apis/bookings";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -21,24 +22,28 @@ export default function AdminLogin() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Demo authentication - replace with actual backend auth
-    setTimeout(() => {
-      if (formData.email && formData.password) {
-        localStorage.setItem("adminAuth", "true");
-        toast({
-          title: "Welcome back!",
-          description: "Successfully logged in to admin panel.",
-        });
-        navigate("/admin");
-      } else {
-        toast({
-          title: "Login failed",
-          description: "Please enter valid credentials.",
-          variant: "destructive",
-        });
-      }
-      setIsLoading(false);
-    }, 1000);
+		try {
+			const res = await adminLogin({
+        email: formData.email.trim(),
+        password: formData.password,
+			});
+			setAdminAccessToken(res.access_token);
+			localStorage.setItem("adminAuth", "true");
+			toast({
+				title: "Welcome back!",
+				description: "Successfully logged in to admin panel.",
+			});
+			navigate("/admin");
+		} catch (err: unknown) {
+			const message = err instanceof Error ? err.message : "Login failed";
+			toast({
+				title: "Login failed",
+				description: message,
+				variant: "destructive",
+			});
+		} finally {
+			setIsLoading(false);
+		}
   };
 
   return (

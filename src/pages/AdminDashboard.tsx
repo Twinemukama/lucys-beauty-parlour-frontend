@@ -11,6 +11,7 @@ import { AddAppointmentDialog } from "@/components/admin/AddAppointmentDialog";
 import { AddPortfolioDialog } from "@/components/admin/AddPortfolioDialog";
 import { CustomerDetailsDialog } from "@/components/admin/CustomerDetailsDialog";
 import { ChangePasswordDialog } from "@/components/admin/ChangePasswordDialog";
+import { clearAdminAccessToken, getAdminAccessToken, listAdminAppointments, type AppointmentDto } from "@/apis/bookings";
 
 interface CalendarAppointment {
   id: string;
@@ -47,6 +48,10 @@ const AdminDashboard = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerDetails | null>(null);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
 
+	const [appointments, setAppointments] = useState<AppointmentDto[]>([]);
+	const [appointmentsLoading, setAppointmentsLoading] = useState(false);
+	const [appointmentsError, setAppointmentsError] = useState<string | null>(null);
+
   const handleViewCalendarAppointment = (appointment: CalendarAppointment) => {
     const customerDetails: CustomerDetails = {
       id: appointment.id,
@@ -72,13 +77,39 @@ const AdminDashboard = () => {
   // Check authentication - redirect to login if not authenticated
   useEffect(() => {
     const isAuth = localStorage.getItem("adminAuth");
-    if (!isAuth) {
+    const token = getAdminAccessToken();
+    if (!isAuth || !token) {
       navigate("/admin/login");
+    return;
     }
+
+    let cancelled = false;
+    setAppointmentsLoading(true);
+    setAppointmentsError(null);
+    listAdminAppointments()
+      .then((data) => {
+        if (cancelled) return;
+        setAppointments(data);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        const message = err instanceof Error ? err.message : "Failed to load appointments";
+        setAppointmentsError(message);
+        setAppointments([]);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setAppointmentsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem("adminAuth");
+		clearAdminAccessToken();
     navigate("/admin/login");
   };
 
@@ -178,6 +209,9 @@ const AdminDashboard = () => {
                   selectedDate={selectedDate} 
                   onSelectDate={setSelectedDate}
                   onViewAppointment={handleViewCalendarAppointment}
+					appointments={appointments}
+					loading={appointmentsLoading}
+					error={appointmentsError}
                 />
               </CardContent>
             </Card>
@@ -190,7 +224,12 @@ const AdminDashboard = () => {
                 <CardDescription>Manage and update appointment details</CardDescription>
               </CardHeader>
               <CardContent>
-                <AppointmentList searchQuery={searchQuery} />
+				<AppointmentList 
+					searchQuery={searchQuery}
+					appointments={appointments}
+					loading={appointmentsLoading}
+					error={appointmentsError}
+				/>
               </CardContent>
             </Card>
           </TabsContent>
@@ -198,7 +237,11 @@ const AdminDashboard = () => {
       </div>
 
       {/* Add Appointment Dialog */}
-      <AddAppointmentDialog open={addDialogOpen} onOpenChange={setAddDialogOpen} />
+      <AddAppointmentDialog
+    		open={addDialogOpen}
+    		onOpenChange={setAddDialogOpen}
+    		defaultDate={selectedDate}
+    	/>
       
       {/* Add Portfolio Dialog */}
       <AddPortfolioDialog open={portfolioDialogOpen} onOpenChange={setPortfolioDialogOpen} />

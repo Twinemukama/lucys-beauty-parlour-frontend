@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +26,7 @@ import { Calendar as CalendarIcon } from "lucide-react";
 interface AddAppointmentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+	defaultDate?: Date;
 }
 
 const services = [
@@ -49,8 +50,8 @@ const timeSlots = [
   "06:00 PM", "06:30 PM",
 ];
 
-export function AddAppointmentDialog({ open, onOpenChange }: AddAppointmentDialogProps) {
-  const [date, setDate] = useState<Date>();
+export function AddAppointmentDialog({ open, onOpenChange, defaultDate }: AddAppointmentDialogProps) {
+  const [date, setDate] = useState<Date | undefined>(defaultDate);
   const [formData, setFormData] = useState({
     customerName: "",
     customerEmail: "",
@@ -60,6 +61,13 @@ export function AddAppointmentDialog({ open, onOpenChange }: AddAppointmentDialo
     time: "",
     notes: "",
   });
+
+	useEffect(() => {
+		// When the dialog opens, prefer the dashboard-selected date.
+		if (open) {
+			setDate(defaultDate);
+		}
+	}, [open, defaultDate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
