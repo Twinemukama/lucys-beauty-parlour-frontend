@@ -29,14 +29,56 @@ import { MoreHorizontal, Eye, Edit, Trash, CheckCircle, XCircle } from "lucide-r
 import { CustomerDetailsDialog } from "./CustomerDetailsDialog";
 import { EditAppointmentDialog, Appointment } from "./EditAppointmentDialog";
 import { useToast } from "@/hooks/use-toast";
+import type { AppointmentDto } from "@/apis/bookings";
 
 interface AppointmentListProps {
   searchQuery: string;
+  appointments?: AppointmentDto[];
+  loading?: boolean;
+  error?: string | null;
   onConfirm?: (customerId: string) => void;
   onCancel?: (customerId: string) => void;
 }
 
 const ITEMS_PER_PAGE = 5;
+
+type AppointmentRow = {
+  id: string;
+  date: string;
+  time: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  service: string;
+  staff: string;
+  status: string;
+  notes: string;
+};
+
+function toDisplayTime(value: string): string {
+  const match = /^([01]\d|2[0-3]):([0-5]\d)/.exec(value);
+  if (!match) return value;
+  const hours24 = Number(match[1]);
+  const minutes = match[2];
+  const suffix = hours24 >= 12 ? "PM" : "AM";
+  const hours12 = ((hours24 + 11) % 12) + 1;
+  return `${hours12}:${minutes} ${suffix}`;
+}
+
+function toRow(dto: AppointmentDto): AppointmentRow {
+  return {
+    id: String(dto.id),
+    date: dto.date,
+    time: toDisplayTime(dto.time),
+    customerName: dto.customer_name,
+    customerEmail: dto.customer_email,
+    customerPhone: dto.customer_phone,
+    service: dto.service_description,
+    staff: dto.staff_name,
+    status: dto.status,
+    notes: dto.notes ?? "",
+  };
+}
 
 // Mock appointments data
 const mockAppointments = [
@@ -138,20 +180,21 @@ const mockAppointments = [
   },
 ];
 
-export function AppointmentList({ searchQuery, onConfirm, onCancel }: AppointmentListProps) {
-  const [selectedCustomer, setSelectedCustomer] = useState<typeof mockAppointments[0] | null>(null);
+export function AppointmentList({ searchQuery, appointments, loading, error, onConfirm, onCancel }: AppointmentListProps) {
+  const rows: AppointmentRow[] = (appointments ? appointments.map(toRow) : mockAppointments);
+  const [selectedCustomer, setSelectedCustomer] = useState<AppointmentRow | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [editAppointment, setEditAppointment] = useState<Appointment | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
 
-  const handleEditAppointment = (appointment: typeof mockAppointments[0]) => {
+  const handleEditAppointment = (appointment: AppointmentRow) => {
     setEditAppointment(appointment as Appointment);
     setEditOpen(true);
   };
 
-  const filteredAppointments = mockAppointments.filter((appointment) => {
+  const filteredAppointments = rows.filter((appointment) => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return (
@@ -162,7 +205,7 @@ export function AppointmentList({ searchQuery, onConfirm, onCancel }: Appointmen
     );
   });
 
-  const handleConfirm = (appointment: typeof mockAppointments[0]) => {
+  const handleConfirm = (appointment: AppointmentRow) => {
     if (onConfirm) {
       onConfirm(appointment.id);
     } else {
@@ -173,7 +216,7 @@ export function AppointmentList({ searchQuery, onConfirm, onCancel }: Appointmen
     }
   };
 
-  const handleCancel = (appointment: typeof mockAppointments[0]) => {
+  const handleCancel = (appointment: AppointmentRow) => {
     if (onCancel) {
       onCancel(appointment.id);
     } else {
@@ -210,7 +253,7 @@ export function AppointmentList({ searchQuery, onConfirm, onCancel }: Appointmen
     }
   };
 
-  const handleViewDetails = (appointment: typeof mockAppointments[0]) => {
+  const handleViewDetails = (appointment: AppointmentRow) => {
     setSelectedCustomer(appointment);
     setDetailsOpen(true);
   };
@@ -218,6 +261,13 @@ export function AppointmentList({ searchQuery, onConfirm, onCancel }: Appointmen
   return (
     <>
       <div className="rounded-md border">
+		{loading && (
+			<div className="text-center py-12 text-muted-foreground">Loading appointments…</div>
+		)}
+		{!loading && error && (
+			<div className="text-center py-12 text-destructive">{error}</div>
+		)}
+
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
@@ -230,7 +280,7 @@ export function AppointmentList({ searchQuery, onConfirm, onCancel }: Appointmen
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedAppointments.map((appointment) => (
+			{!loading && !error && paginatedAppointments.map((appointment) => (
               <TableRow key={appointment.id} className="hover:bg-muted/30">
                 <TableCell>
                   <div className="flex flex-col">
@@ -300,19 +350,19 @@ export function AppointmentList({ searchQuery, onConfirm, onCancel }: Appointmen
                   </DropdownMenu>
                 </TableCell>
               </TableRow>
-            ))}
+			))}
           </TableBody>
         </Table>
 
-        {filteredAppointments.length === 0 && (
+		{!loading && !error && filteredAppointments.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
             No appointments found
           </div>
-        )}
+		)}
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
+		{!loading && !error && totalPages > 1 && (
         <div className="flex items-center justify-between mt-4">
           <p className="text-sm text-muted-foreground">
             Showing {((validCurrentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(validCurrentPage * ITEMS_PER_PAGE, filteredAppointments.length)} of {filteredAppointments.length} appointments
@@ -345,7 +395,7 @@ export function AppointmentList({ searchQuery, onConfirm, onCancel }: Appointmen
             </PaginationContent>
           </Pagination>
         </div>
-      )}
+		)}
 
       {/* Customer Details Dialog */}
       <CustomerDetailsDialog

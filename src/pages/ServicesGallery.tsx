@@ -14,6 +14,12 @@ const categories = [
   { id: "nails", label: "Nails", fullLabel: "Nails Studio", icon: Sparkles },
 ];
 
+const bookingServiceByTab: Record<string, string> = {
+  hair: "Hair Styling & Braiding",
+  makeup: "Makeup",
+  nails: "Nails",
+};
+
 const galleryItems = {
   hair: [
     { id: 1, title: "Elegant Updo", description: "Perfect for weddings and special occasions", image: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=500&fit=crop" },
@@ -141,7 +147,7 @@ export default function ServicesGallery() {
             className="bg-gradient-primary hover:opacity-90 transition-smooth text-primary-foreground font-medium px-8 py-6 text-lg shadow-elegant"
             onClick={() => setBookingOpen(true)}
           >
-            Book {activeTab === "hair" ? "Hair Styling & Braiding" : activeTab === "nails" ? "Nails Studio" : "Makeup Artistry"} Now
+            Book {activeTab === "hair" ? "Hair" : activeTab === "nails" ? "Nails" : "Makeup"} Appointment Now
           </Button>
         </div>
       </section>
@@ -173,7 +179,7 @@ export default function ServicesGallery() {
       <BookingDialog 
         open={bookingOpen} 
         onOpenChange={setBookingOpen} 
-        preSelectedService={activeTab}
+        preSelectedService={bookingServiceByTab[activeTab]}
       />
     </div>
   );

@@ -5,6 +5,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Clock, Mail, Phone, User, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useCallback } from "react";
+import { format, parseISO } from "date-fns";
+import type { AppointmentDto } from "@/apis/bookings";
 
 interface Appointment {
   id: string;
@@ -22,59 +24,62 @@ interface AppointmentCalendarProps {
   selectedDate: Date | undefined;
   onSelectDate: (date: Date | undefined) => void;
   onViewAppointment?: (appointment: Appointment) => void;
+	appointments?: AppointmentDto[];
+	loading?: boolean;
+	error?: string | null;
 }
 
-// Mock appointment data
-const mockAppointments = [
-  {
-    id: "1",
-    customerName: "Sarah Johnson",
-    customerEmail: "sarah@example.com",
-    customerPhone: "+1 234 567 8901",
-    service: "Hair Styling",
-    time: "09:00 AM",
-    status: "confirmed",
-    staff: "Emma",
-    date: new Date(),
-  },
-  {
-    id: "2",
-    customerName: "Emily Davis",
-    customerEmail: "emily@example.com",
-    customerPhone: "+1 234 567 8902",
-    service: "Manicure & Pedicure",
-    time: "11:00 AM",
-    status: "pending",
-    staff: "Sophie",
-    date: new Date(),
-  },
-  {
-    id: "3",
-    customerName: "Jessica Wilson",
-    customerEmail: "jessica@example.com",
-    customerPhone: "+1 234 567 8903",
-    service: "Facial Treatment",
-    time: "02:00 PM",
-    status: "confirmed",
-    staff: "Emma",
-    date: new Date(),
-  },
-  {
-    id: "4",
-    customerName: "Amanda Brown",
-    customerEmail: "amanda@example.com",
-    customerPhone: "+1 234 567 8904",
-    service: "Hair Coloring",
-    time: "04:30 PM",
-    status: "confirmed",
-    staff: "Sophie",
-    date: new Date(),
-  },
-];
+function toDisplayTime(value: string): string {
+	// Supports "HH:MM" (24h) or passes through other formats.
+	const match = /^([01]\d|2[0-3]):([0-5]\d)/.exec(value);
+	if (!match) return value;
+	const hours24 = Number(match[1]);
+	const minutes = match[2];
+	const suffix = hours24 >= 12 ? "PM" : "AM";
+	const hours12 = ((hours24 + 11) % 12) + 1;
+	return `${hours12}:${minutes} ${suffix}`;
+}
+
+function toCalendarAppointment(dto: AppointmentDto): Appointment {
+  const normalizedDate = normalizeDateKey(dto.date);
+	return {
+		id: String(dto.id),
+		customerName: dto.customer_name,
+		customerEmail: dto.customer_email,
+		customerPhone: dto.customer_phone,
+		service: dto.service_description,
+		time: toDisplayTime(dto.time),
+		status: dto.status,
+		staff: dto.staff_name,
+    date: safeParseDate(normalizedDate),
+	};
+}
+
+function normalizeDateKey(value: string): string {
+  // Accepts "YYYY-MM-DD" or ISO timestamps like "YYYY-MM-DDTHH:mm:ssZ".
+  const match = /^\d{4}-\d{2}-\d{2}/.exec(value);
+  return match ? match[0] : value;
+}
+
+function safeParseDate(value: string): Date {
+  try {
+    return value.includes("T") ? parseISO(value) : parseISO(`${value}T00:00:00`);
+  } catch {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? new Date() : d;
+  }
+}
 
 const ITEMS_PER_LOAD = 15;
 
-export function AppointmentCalendar({ selectedDate, onSelectDate, onViewAppointment }: AppointmentCalendarProps) {
+export function AppointmentCalendar({
+  selectedDate,
+  onSelectDate,
+  onViewAppointment,
+  appointments,
+  loading,
+  error,
+}: AppointmentCalendarProps) {
   const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_LOAD);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -83,8 +88,16 @@ export function AppointmentCalendar({ selectedDate, onSelectDate, onViewAppointm
     setDisplayedCount(ITEMS_PER_LOAD);
   }, [selectedDate]);
 
-  const displayedAppointments = mockAppointments.slice(0, displayedCount);
-  const hasMore = displayedCount < mockAppointments.length;
+  const selectedKey = selectedDate ? format(selectedDate, "yyyy-MM-dd") : null;
+  const allAppointments = (appointments ?? [])
+	.filter((a) => (selectedKey ? normalizeDateKey(a.date) === selectedKey : true))
+    // basic stable sort by date+time for display
+    .slice()
+    .sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`))
+    .map(toCalendarAppointment);
+
+  const displayedAppointments = allAppointments.slice(0, displayedCount);
+  const hasMore = displayedCount < allAppointments.length;
 
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const target = e.target as HTMLDivElement;
@@ -96,11 +109,11 @@ export function AppointmentCalendar({ selectedDate, onSelectDate, onViewAppointm
       setIsLoading(true);
       // Simulate loading delay
       setTimeout(() => {
-        setDisplayedCount(prev => Math.min(prev + ITEMS_PER_LOAD, mockAppointments.length));
+			setDisplayedCount((prev) => Math.min(prev + ITEMS_PER_LOAD, allAppointments.length));
         setIsLoading(false);
       }, 300);
     }
-  }, [hasMore, isLoading]);
+  }, [allAppointments.length, hasMore, isLoading]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -158,6 +171,19 @@ export function AppointmentCalendar({ selectedDate, onSelectDate, onViewAppointm
           <CardContent>
             <ScrollArea className="h-[400px] pr-4" onScrollCapture={handleScroll}>
               <div className="space-y-4">
+				{loading && (
+					<div className="flex items-center justify-center gap-2 py-12 text-muted-foreground">
+						<Loader2 className="h-5 w-5 animate-spin" />
+						<span>Loading appointments…</span>
+					</div>
+				)}
+
+				{!loading && error && (
+					<div className="text-center py-12 text-destructive">
+						{error}
+					</div>
+				)}
+
                 {displayedAppointments.map((appointment) => (
                   <Card key={appointment.id} className="border-l-4 border-l-primary shadow-soft">
                     <CardContent className="pt-6">
@@ -219,7 +245,7 @@ export function AppointmentCalendar({ selectedDate, onSelectDate, onViewAppointm
                   </div>
                 )}
 
-                {displayedAppointments.length === 0 && (
+                {!loading && !error && displayedAppointments.length === 0 && (
                   <div className="text-center py-12 text-muted-foreground">
                     No appointments scheduled for this date
                   </div>
