@@ -8,21 +8,6 @@ import { useState, useEffect, useCallback } from "react";
 import { format, parseISO } from "date-fns";
 import type { AppointmentDto } from "@/apis/bookings";
 
-// Service name mapping by ID
-const serviceNameMap: Record<number, string> = {
-  1: "Knotless Braids",
-  2: "Wig Install",
-  3: "Soft Glam",
-  4: "Bridal Makeup",
-  5: "Gel Manicure",
-  6: "Acrylic Full Set",
-};
-
-const getServiceDisplayName = (serviceId: number, variant: string): string => {
-  const baseName = serviceNameMap[serviceId] || "Service";
-  return `${baseName} (${variant})`;
-};
-
 interface Appointment {
   id: string;
   customerName: string;
