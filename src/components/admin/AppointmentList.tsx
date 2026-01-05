@@ -31,6 +31,7 @@ import { EditAppointmentDialog, Appointment } from "./EditAppointmentDialog";
 import { useToast } from "@/hooks/use-toast";
 import type { AppointmentDto } from "@/apis/bookings";
 import { updateAdminAppointment, cancelAdminAppointment, deleteAdminAppointment } from "@/apis/bookings";
+import { getServiceDisplayName } from "@/lib/utils";
 
 interface AppointmentListProps {
   searchQuery: string;
@@ -43,20 +44,7 @@ interface AppointmentListProps {
 
 const ITEMS_PER_PAGE = 5;
 
-// Service name mapping by ID
-const serviceNameMap: Record<number, string> = {
-  1: "Knotless Braids",
-  2: "Wig Install",
-  3: "Soft Glam",
-  4: "Bridal Makeup",
-  5: "Gel Manicure",
-  6: "Acrylic Full Set",
-};
-
-const getServiceDisplayName = (serviceId: number, variant: string): string => {
-  const baseName = serviceNameMap[serviceId] || "Service";
-  return `${baseName} (${variant})`;
-};
+// ...existing code...
 
 type AppointmentRow = {
   id: string;

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect, useCallback } from "react";
 import { format, parseISO } from "date-fns";
 import type { AppointmentDto } from "@/apis/bookings";
+import { getServiceDisplayName } from "@/lib/utils";
 
 interface Appointment {
   id: string;
