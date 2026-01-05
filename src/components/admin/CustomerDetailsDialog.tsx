@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,17 +10,20 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, Mail, Phone, User, FileText, Briefcase, CheckCircle, XCircle } from "lucide-react";
+import { Calendar, Clock, Mail, Phone, User, FileText, Briefcase, CheckCircle, XCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { updateAdminAppointment, cancelAdminAppointment, deleteAdminAppointment } from "@/apis/bookings";
 
 interface Customer {
-  id: string;
+  id: string | number;
   date: string;
+  dateDisplay?: string;
   time: string;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
   service: string;
+  service_id: number;
   staff: string;
   status: string;
   notes: string;
@@ -29,38 +33,108 @@ interface CustomerDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   customer: Customer | null;
-  onConfirm?: (id: string) => void;
-  onCancel?: (id: string) => void;
+  onConfirm?: (id: string | number) => void;
+  onCancel?: (id: string | number) => void;
+  onDelete?: (id: string | number) => void;
 }
 
-export function CustomerDetailsDialog({ open, onOpenChange, customer, onConfirm, onCancel }: CustomerDetailsDialogProps) {
+export function CustomerDetailsDialog({ open, onOpenChange, customer, onConfirm, onCancel, onDelete }: CustomerDetailsDialogProps) {
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   
   if (!customer) return null;
 
-  const handleConfirm = () => {
-    if (onConfirm) {
-      onConfirm(customer.id);
-    } else {
+  const handleConfirm = async () => {
+    if (!customer) return;
+    setIsLoading(true);
+    try {
+      const appointmentId = typeof customer.id === "string" ? parseInt(customer.id, 10) : customer.id;
+      
+      await updateAdminAppointment(appointmentId, {
+        customer_name: customer.customerName,
+        customer_email: customer.customerEmail,
+        customer_phone: customer.customerPhone,
+        staff_name: customer.staff,
+        service_id: customer.service_id,
+        service_description: customer.service,
+        date: customer.date,
+        time: customer.time,
+        status: "confirmed",
+      });
       toast({
         title: "Appointment Confirmed",
         description: `Appointment for ${customer.customerName} has been confirmed.`,
       });
+      if (onConfirm) {
+        onConfirm(customer.id);
+      }
+      onOpenChange(false);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to confirm appointment";
+      toast({
+        title: "Error",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-    onOpenChange(false);
   };
 
-  const handleCancel = () => {
-    if (onCancel) {
-      onCancel(customer.id);
-    } else {
+  const handleCancel = async () => {
+    if (!customer) return;
+    setIsLoading(true);
+    try {
+      const appointmentId = typeof customer.id === "string" ? parseInt(customer.id, 10) : customer.id;
+      await cancelAdminAppointment(appointmentId);
       toast({
         title: "Appointment Cancelled",
         description: `Appointment for ${customer.customerName} has been cancelled.`,
         variant: "destructive",
       });
+      if (onCancel) {
+        onCancel(customer.id);
+      }
+      onOpenChange(false);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to cancel appointment";
+      toast({
+        title: "Error",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-    onOpenChange(false);
+  };
+
+  const handleDelete = async () => {
+    if (!customer) return;
+    if (!window.confirm(`Are you sure you want to delete this appointment? This action cannot be undone.`)) {
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const appointmentId = typeof customer.id === "string" ? parseInt(customer.id, 10) : customer.id;
+      await deleteAdminAppointment(appointmentId);
+      toast({
+        title: "Appointment Deleted",
+        description: `Appointment for ${customer.customerName} has been permanently deleted.`,
+      });
+      if (onDelete) {
+        onDelete(customer.id);
+      }
+      onOpenChange(false);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to delete appointment";
+      toast({
+        title: "Error",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -139,7 +213,7 @@ export function CustomerDetailsDialog({ open, onOpenChange, customer, onConfirm,
                 <p className="text-sm text-muted-foreground">Date</p>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <p className="font-medium">{customer.date}</p>
+                  <p className="font-medium">{customer.dateDisplay || customer.date}</p>
                 </div>
               </div>
               <div className="space-y-1">
@@ -183,23 +257,41 @@ export function CustomerDetailsDialog({ open, onOpenChange, customer, onConfirm,
           )}
         </div>
 
-        {/* Action buttons for pending appointments */}
-        {customer.status === "pending" && (
-          <DialogFooter className="mt-6 gap-2 sm:gap-0">
+        {/* Action buttons */}
+        <DialogFooter className="mt-6 gap-2 sm:gap-0 flex flex-col sm:flex-row justify-between">
+          {customer.status === "pending" && (
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button 
+                variant="outline" 
+                onClick={handleCancel}
+                disabled={isLoading}
+                className="text-destructive hover:text-destructive flex-1 sm:flex-initial"
+              >
+                <XCircle className="mr-2 h-4 w-4" />
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleConfirm}
+                disabled={isLoading}
+                className="flex-1 sm:flex-initial"
+              >
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Confirm
+              </Button>
+            </div>
+          )}
+          {customer.status !== "pending" && (
             <Button 
-              variant="outline" 
-              onClick={handleCancel}
-              className="text-destructive hover:text-destructive"
+              variant="ghost" 
+              onClick={handleDelete}
+              disabled={isLoading}
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
             >
-              <XCircle className="mr-2 h-4 w-4" />
-              Cancel Appointment
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
             </Button>
-            <Button onClick={handleConfirm}>
-              <CheckCircle className="mr-2 h-4 w-4" />
-              Confirm Appointment
-            </Button>
-          </DialogFooter>
-        )}
+          )}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

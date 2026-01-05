@@ -75,9 +75,14 @@ const mockServiceOptions: MockServiceOption[] = [
 
 const staff = [
   { id: "any", name: "No Preference" },
-  { id: "lucy", name: "Lucy Martinez" },
-  { id: "sarah", name: "Sarah Chen" },
-  { id: "emma", name: "Emma Rodriguez" },
+  { id: "lucy", name: "Lucy" },
+  { id: "lonnie", name: "Lonnet" },
+  { id: "spe", name: "Spe" },
+  { id: "truth", name: "Truth" },
+  { id: "jim", name: "Jim" },
+  { id: "destiny", name: "Destiny" },
+  { id: "joan", name: "Joan" },
+  { id: "gift", name: "Gift" },
 ];
 
 const generateTimeSlots = () => {
@@ -303,7 +308,7 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService }: Bookin
         <DialogHeader>
           <DialogTitle className="font-playfair text-3xl">Book Your Appointment</DialogTitle>
           <DialogDescription>
-            {step < 5 ? `Step ${step} of 4` : "Booking Confirmed"}
+            {step < 5 ? `Step ${Math.ceil(step)} of 5` : "Booking Confirmed"}
           </DialogDescription>
         </DialogHeader>
 
@@ -316,7 +321,6 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService }: Bookin
                 {filteredServiceOptions.map((opt) => {
                   const Icon = opt.service === "Hair Styling & Braiding" ? Scissors : opt.service === "Makeup" ? Heart : Sparkles;
                   const isSelected = selectedServiceOptionId === opt.id;
-                  const primaryDesc = opt.descriptions[0] || "";
 
                   return (
                     <button
@@ -324,7 +328,7 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService }: Bookin
                       type="button"
                       onClick={() => {
                         setSelectedServiceOptionId(opt.id);
-                        setSelectedServiceDescription(primaryDesc);
+                        setStep(1.5);
                       }}
                       className={cn(
                         "p-6 rounded-lg border-2 transition-smooth text-left relative",
@@ -335,17 +339,48 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService }: Bookin
                       <Icon className="w-8 h-8 text-primary mb-3" />
                       <h3 className="font-playfair text-xl mb-2">{opt.name}</h3>
                       <p className="text-sm text-muted-foreground">{opt.duration} minutes</p>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {primaryDesc}
-                      </p>
                     </button>
                   );
                 })}
               </div>
             </div>
             <div className="flex justify-end">
-              <Button onClick={handleNext} disabled={!selectedServiceOptionId || !selectedServiceDescription}>
+              <Button onClick={handleNext} disabled={!selectedServiceOptionId}>
                 Next
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 1.5: Select Service Variant */}
+        {step === 1.5 && selectedServiceOption && (
+          <div className="space-y-6 py-4">
+            <div>
+              <Label className="text-lg font-playfair mb-4 block">Select {selectedServiceOption.name} Variant</Label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {selectedServiceOption.descriptions.map((desc) => (
+                  <button
+                    key={desc}
+                    type="button"
+                    onClick={() => {
+                      setSelectedServiceDescription(desc);
+                      setStep(2);
+                    }}
+                    className={cn(
+                      "p-4 rounded-lg border-2 transition-smooth text-center font-medium",
+                      selectedServiceDescription === desc
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border hover:border-primary bg-card",
+                    )}
+                  >
+                    {desc}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={() => setStep(1)}>
+                Back
               </Button>
             </div>
           </div>
@@ -392,7 +427,7 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService }: Bookin
             </div>
 
             <div className="flex justify-between">
-              <Button variant="outline" onClick={handleBack}>
+              <Button variant="outline" onClick={() => setStep(1.5)}>
                 Back
               </Button>
               <Button onClick={handleNext} disabled={!selectedDate || dateCapacityLoading || dateAtCapacity}>
