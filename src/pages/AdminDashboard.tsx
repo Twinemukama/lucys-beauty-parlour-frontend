@@ -125,27 +125,19 @@ const AdminDashboard = () => {
   };
 
   const refreshAppointments = () => {
-    let cancelled = false;
     setAppointmentsLoading(true);
     setAppointmentsError(null);
     listAdminAppointments()
       .then((data) => {
-        if (cancelled) return;
         setAppointments(data);
       })
       .catch((err: unknown) => {
-        if (cancelled) return;
         const message = err instanceof Error ? err.message : "Failed to load appointments";
         setAppointmentsError(message);
       })
       .finally(() => {
-        if (cancelled) return;
         setAppointmentsLoading(false);
       });
-    
-    return () => {
-      cancelled = true;
-    };
   };
 
   const handleAppointmentConfirmed = () => {
