@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar as CalendarIcon, Clock, Users, Plus, Search, Filter, LogOut, ImagePlus, Key } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Users, Plus, Search, Filter, LogOut, ImagePlus, Key, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppointmentCalendar } from "@/components/admin/AppointmentCalendar";
 import { AppointmentList } from "@/components/admin/AppointmentList";
-import { AddAppointmentDialog } from "@/components/admin/AddAppointmentDialog";
+import { BookingDialog } from "@/components/BookingDialog";
 import { AddPortfolioDialog } from "@/components/admin/AddPortfolioDialog";
 import { CustomerDetailsDialog } from "@/components/admin/CustomerDetailsDialog";
 import { ChangePasswordDialog } from "@/components/admin/ChangePasswordDialog";
@@ -19,6 +19,7 @@ interface CalendarAppointment {
   customerEmail: string;
   customerPhone: string;
   service: string;
+  service_id: number;
   time: string;
   status: string;
   staff: string;
@@ -28,11 +29,13 @@ interface CalendarAppointment {
 interface CustomerDetails {
   id: string;
   date: string;
+  dateDisplay: string;
   time: string;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
   service: string;
+  service_id: number;
   staff: string;
   status: string;
   notes: string;
@@ -53,9 +56,16 @@ const AdminDashboard = () => {
 	const [appointmentsError, setAppointmentsError] = useState<string | null>(null);
 
   const handleViewCalendarAppointment = (appointment: CalendarAppointment) => {
+    // Format date as YYYY-MM-DD from local date (avoid UTC conversion)
+    const year = appointment.date.getFullYear();
+    const month = String(appointment.date.getMonth() + 1).padStart(2, '0');
+    const day = String(appointment.date.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    
     const customerDetails: CustomerDetails = {
       id: appointment.id,
-      date: appointment.date.toLocaleDateString('en-US', { 
+      date: dateStr,
+      dateDisplay: appointment.date.toLocaleDateString('en-US', { 
         weekday: 'long', 
         month: 'long', 
         day: 'numeric',
@@ -66,6 +76,7 @@ const AdminDashboard = () => {
       customerEmail: appointment.customerEmail,
       customerPhone: appointment.customerPhone,
       service: appointment.service,
+      service_id: appointment.service_id,
       staff: appointment.staff,
       status: appointment.status,
       notes: "",
@@ -113,11 +124,56 @@ const AdminDashboard = () => {
     navigate("/admin/login");
   };
 
-  // Mock stats data
+  const refreshAppointments = () => {
+    setAppointmentsLoading(true);
+    setAppointmentsError(null);
+    listAdminAppointments()
+      .then((data) => {
+        setAppointments(data);
+      })
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : "Failed to load appointments";
+        setAppointmentsError(message);
+      })
+      .finally(() => {
+        setAppointmentsLoading(false);
+      });
+  };
+
+  const handleAppointmentConfirmed = () => {
+    refreshAppointments();
+  };
+
+  const handleAppointmentCancelled = () => {
+    refreshAppointments();
+  };
+
+  const handleAppointmentDeleted = () => {
+    refreshAppointments();
+  };
+
+  const handleBookingDialogClose = (open: boolean) => {
+    setAddDialogOpen(open);
+    if (!open) {
+      // Refresh appointments when booking dialog closes
+      refreshAppointments();
+    }
+  };
+
+  // appointment stats
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  
+  const todaysAppointments = appointments.filter(apt => apt.date === todayStr).length;
+  const todaysConfirmedAppointments = appointments.filter(apt => apt.date === todayStr && apt.status === "confirmed").length;
+  const pendingAppointments = appointments.filter(apt => apt.status === "pending").length;
+  const totalAppointments = appointments.length;
+
   const stats = [
-    { label: "Today's Appointments", value: "12", icon: CalendarIcon, color: "text-primary" },
-    { label: "Pending Confirmations", value: "5", icon: Clock, color: "text-accent" },
-    { label: "Total Customers", value: "248", icon: Users, color: "text-rose-gold" },
+    { label: "Today's Appointments", value: todaysAppointments.toString(), icon: CalendarIcon, color: "text-primary" },
+    { label: "Today's Confirmed", value: todaysConfirmedAppointments.toString(), icon: CheckCircle, color: "text-primary" },
+    { label: "Pending Confirmations", value: pendingAppointments.toString(), icon: Clock, color: "text-accent" },
+    { label: "Total Appointments", value: totalAppointments.toString(), icon: Users, color: "text-rose-gold" },
   ];
 
   return (
@@ -154,7 +210,7 @@ const AdminDashboard = () => {
 
       <div className="container mx-auto px-4 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, index) => (
             <Card key={index} className="shadow-soft hover:shadow-elegant transition-all">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -237,11 +293,10 @@ const AdminDashboard = () => {
       </div>
 
       {/* Add Appointment Dialog */}
-      <AddAppointmentDialog
-    		open={addDialogOpen}
-    		onOpenChange={setAddDialogOpen}
-    		defaultDate={selectedDate}
-    	/>
+      <BookingDialog
+        open={addDialogOpen}
+        onOpenChange={handleBookingDialogClose}
+      />
       
       {/* Add Portfolio Dialog */}
       <AddPortfolioDialog open={portfolioDialogOpen} onOpenChange={setPortfolioDialogOpen} />
@@ -251,6 +306,9 @@ const AdminDashboard = () => {
         open={customerDetailsOpen} 
         onOpenChange={setCustomerDetailsOpen} 
         customer={selectedCustomer}
+        onConfirm={handleAppointmentConfirmed}
+        onCancel={handleAppointmentCancelled}
+        onDelete={handleAppointmentDeleted}
       />
 
       {/* Change Password Dialog */}

@@ -228,3 +228,89 @@ export async function listAppointmentsByDate(date: string): Promise<AppointmentD
 	return items.filter((a) => a?.date === date);
 }
 
+/** Calls the backend route: GET /admin/appointments/:id (h.GetAppointment) */
+export async function getAdminAppointment(id: number): Promise<AppointmentDto> {
+	const accessToken = getAdminAccessToken();
+	const res = await fetch(`${API_BASE_URL}/admin/appointments/${id}`, {
+		method: "GET",
+		headers: {
+			Accept: "application/json",
+			...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+		},
+		credentials: "include",
+	});
+
+	if (!res.ok) {
+		const body = await readErrorBody(res);
+		const message = extractErrorMessage(body, res.statusText || "Request failed");
+		throw new ApiError(message, res.status, body);
+	}
+
+	return (await res.json()) as AppointmentDto;
+}
+
+export type UpdateAppointmentRequest = Partial<CreateAppointmentRequest>;
+
+/** Calls the backend route: PUT /admin/appointments/:id (h.UpdateAppointment) */
+export async function updateAdminAppointment(id: number, input: UpdateAppointmentRequest): Promise<AppointmentDto> {
+	const accessToken = getAdminAccessToken();
+	const res = await fetch(`${API_BASE_URL}/admin/appointments/${id}`, {
+		method: "PUT",
+		headers: {
+			Accept: "application/json",
+			"Content-Type": "application/json",
+			...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+		},
+		body: JSON.stringify(input),
+		credentials: "include",
+	});
+
+	if (!res.ok) {
+		const body = await readErrorBody(res);
+		const message = extractErrorMessage(body, res.statusText || "Request failed");
+		throw new ApiError(message, res.status, body);
+	}
+
+	return (await res.json()) as AppointmentDto;
+}
+
+/** Calls the backend route: PUT /admin/appointments/:id/cancel (h.CancelAppointment) */
+export async function cancelAdminAppointment(id: number): Promise<AppointmentDto> {
+	const accessToken = getAdminAccessToken();
+	const res = await fetch(`${API_BASE_URL}/admin/appointments/${id}/cancel`, {
+		method: "PUT",
+		headers: {
+			Accept: "application/json",
+			...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+		},
+		credentials: "include",
+	});
+
+	if (!res.ok) {
+		const body = await readErrorBody(res);
+		const message = extractErrorMessage(body, res.statusText || "Request failed");
+		throw new ApiError(message, res.status, body);
+	}
+
+	return (await res.json()) as AppointmentDto;
+}
+
+/** Calls the backend route: DELETE /admin/appointments/:id (h.DeleteAppointment) */
+export async function deleteAdminAppointment(id: number): Promise<void> {
+	const accessToken = getAdminAccessToken();
+	const res = await fetch(`${API_BASE_URL}/admin/appointments/${id}`, {
+		method: "DELETE",
+		headers: {
+			Accept: "application/json",
+			...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+		},
+		credentials: "include",
+	});
+
+	if (!res.ok) {
+		const body = await readErrorBody(res);
+		const message = extractErrorMessage(body, res.statusText || "Request failed");
+		throw new ApiError(message, res.status, body);
+	}
+}
+

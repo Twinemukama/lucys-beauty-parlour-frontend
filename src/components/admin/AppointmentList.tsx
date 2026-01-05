@@ -30,6 +30,7 @@ import { CustomerDetailsDialog } from "./CustomerDetailsDialog";
 import { EditAppointmentDialog, Appointment } from "./EditAppointmentDialog";
 import { useToast } from "@/hooks/use-toast";
 import type { AppointmentDto } from "@/apis/bookings";
+import { updateAdminAppointment, cancelAdminAppointment, deleteAdminAppointment } from "@/apis/bookings";
 
 interface AppointmentListProps {
   searchQuery: string;
@@ -42,6 +43,21 @@ interface AppointmentListProps {
 
 const ITEMS_PER_PAGE = 5;
 
+// Service name mapping by ID
+const serviceNameMap: Record<number, string> = {
+  1: "Knotless Braids",
+  2: "Wig Install",
+  3: "Soft Glam",
+  4: "Bridal Makeup",
+  5: "Gel Manicure",
+  6: "Acrylic Full Set",
+};
+
+const getServiceDisplayName = (serviceId: number, variant: string): string => {
+  const baseName = serviceNameMap[serviceId] || "Service";
+  return `${baseName} (${variant})`;
+};
+
 type AppointmentRow = {
   id: string;
   date: string;
@@ -50,6 +66,7 @@ type AppointmentRow = {
   customerEmail: string;
   customerPhone: string;
   service: string;
+  service_id: number;
   staff: string;
   status: string;
   notes: string;
@@ -65,6 +82,24 @@ function toDisplayTime(value: string): string {
   return `${hours12}:${minutes} ${suffix}`;
 }
 
+function timeToMinutes(displayTime: string): number {
+  // Convert 12-hour format (e.g., "09:00 AM") back to minutes since midnight
+  const match = /^(\d{1,2}):(\d{2})\s(AM|PM)$/.exec(displayTime.trim());
+  if (!match) return 0;
+  
+  let hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const period = match[3];
+  
+  if (period === "PM" && hours !== 12) {
+    hours += 12;
+  } else if (period === "AM" && hours === 12) {
+    hours = 0;
+  }
+  
+  return hours * 60 + minutes;
+}
+
 function toRow(dto: AppointmentDto): AppointmentRow {
   return {
     id: String(dto.id),
@@ -74,6 +109,7 @@ function toRow(dto: AppointmentDto): AppointmentRow {
     customerEmail: dto.customer_email,
     customerPhone: dto.customer_phone,
     service: dto.service_description,
+    service_id: dto.service_id,
     staff: dto.staff_name,
     status: dto.status,
     notes: dto.notes ?? "",
@@ -90,6 +126,7 @@ const mockAppointments = [
     customerEmail: "sarah@example.com",
     customerPhone: "+1 234 567 8901",
     service: "Hair Styling",
+    service_id: 1,
     staff: "Emma",
     status: "confirmed",
     notes: "Prefers natural colors",
@@ -102,6 +139,7 @@ const mockAppointments = [
     customerEmail: "emily@example.com",
     customerPhone: "+1 234 567 8902",
     service: "Manicure & Pedicure",
+    service_id: 5,
     staff: "Sophie",
     status: "pending",
     notes: "First time customer",
@@ -114,6 +152,7 @@ const mockAppointments = [
     customerEmail: "jessica@example.com",
     customerPhone: "+1 234 567 8903",
     service: "Facial Treatment",
+    service_id: 3,
     staff: "Emma",
     status: "confirmed",
     notes: "Sensitive skin",
@@ -126,6 +165,7 @@ const mockAppointments = [
     customerEmail: "amanda@example.com",
     customerPhone: "+1 234 567 8904",
     service: "Hair Coloring",
+    service_id: 1,
     staff: "Sophie",
     status: "confirmed",
     notes: "",
@@ -138,6 +178,7 @@ const mockAppointments = [
     customerEmail: "rachel@example.com",
     customerPhone: "+1 234 567 8905",
     service: "Makeup",
+    service_id: 4,
     staff: "Emma",
     status: "pending",
     notes: "Wedding makeup",
@@ -150,6 +191,7 @@ const mockAppointments = [
     customerEmail: "monica@example.com",
     customerPhone: "+1 234 567 8906",
     service: "Hair Styling",
+    service_id: 1,
     staff: "Sophie",
     status: "confirmed",
     notes: "",
@@ -162,6 +204,7 @@ const mockAppointments = [
     customerEmail: "phoebe@example.com",
     customerPhone: "+1 234 567 8907",
     service: "Facial Treatment",
+    service_id: 3,
     staff: "Emma",
     status: "pending",
     notes: "Prefers organic products",
@@ -174,6 +217,7 @@ const mockAppointments = [
     customerEmail: "chandler@example.com",
     customerPhone: "+1 234 567 8908",
     service: "Hair Styling",
+    service_id: 1,
     staff: "Sophie",
     status: "cancelled",
     notes: "Rescheduled",
@@ -205,24 +249,90 @@ export function AppointmentList({ searchQuery, appointments, loading, error, onC
     );
   });
 
-  const handleConfirm = (appointment: AppointmentRow) => {
-    if (onConfirm) {
-      onConfirm(appointment.id);
-    } else {
+  // Sort by date and time, most upcoming first (earliest appointments first)
+  const sortedAppointments = [...filteredAppointments].sort((a, b) => {
+    // First compare by date
+    if (a.date !== b.date) {
+      return a.date.localeCompare(b.date);
+    }
+    // If same date, compare by time
+    const timeAMinutes = timeToMinutes(a.time);
+    const timeBMinutes = timeToMinutes(b.time);
+    return timeAMinutes - timeBMinutes;
+  });
+
+  const handleConfirm = async (appointment: AppointmentRow) => {
+    try {
+      const appointmentId = Number(appointment.id);
+      await updateAdminAppointment(appointmentId, {
+        customer_name: appointment.customerName,
+        customer_email: appointment.customerEmail,
+        customer_phone: appointment.customerPhone,
+        staff_name: appointment.staff,
+        service_id: appointment.service_id,
+        service_description: appointment.service,
+        date: appointment.date,
+        time: appointment.time,
+        status: "confirmed",
+      });
       toast({
         title: "Appointment Confirmed",
         description: `Appointment for ${appointment.customerName} has been confirmed.`,
       });
+      if (onConfirm) {
+        onConfirm(appointment.id);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to confirm appointment";
+      toast({
+        title: "Error",
+        description: message,
+        variant: "destructive",
+      });
     }
   };
 
-  const handleCancel = (appointment: AppointmentRow) => {
-    if (onCancel) {
-      onCancel(appointment.id);
-    } else {
+  const handleCancel = async (appointment: AppointmentRow) => {
+    try {
+      const appointmentId = Number(appointment.id);
+      await cancelAdminAppointment(appointmentId);
       toast({
         title: "Appointment Cancelled",
         description: `Appointment for ${appointment.customerName} has been cancelled.`,
+        variant: "destructive",
+      });
+      if (onCancel) {
+        onCancel(appointment.id);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to cancel appointment";
+      toast({
+        title: "Error",
+        description: message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDelete = async (appointment: AppointmentRow) => {
+    if (!window.confirm(`Are you sure you want to delete this appointment? This action cannot be undone.`)) {
+      return;
+    }
+    try {
+      const appointmentId = Number(appointment.id);
+      await deleteAdminAppointment(appointmentId);
+      toast({
+        title: "Appointment Deleted",
+        description: `Appointment for ${appointment.customerName} has been permanently deleted.`,
+      });
+      if (onConfirm) {
+        onConfirm(appointment.id);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to delete appointment";
+      toast({
+        title: "Error",
+        description: message,
         variant: "destructive",
       });
     }
@@ -230,10 +340,10 @@ export function AppointmentList({ searchQuery, appointments, loading, error, onC
 
 
   // Reset to first page when search query changes
-  const totalPages = Math.ceil(filteredAppointments.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(sortedAppointments.length / ITEMS_PER_PAGE);
   const validCurrentPage = Math.min(currentPage, Math.max(1, totalPages));
 
-  const paginatedAppointments = filteredAppointments.slice(
+  const paginatedAppointments = sortedAppointments.slice(
     (validCurrentPage - 1) * ITEMS_PER_PAGE,
     validCurrentPage * ITEMS_PER_PAGE
   );
@@ -294,7 +404,7 @@ export function AppointmentList({ searchQuery, appointments, loading, error, onC
                     <span className="text-sm text-muted-foreground">{appointment.customerEmail}</span>
                   </div>
                 </TableCell>
-                <TableCell>{appointment.service}</TableCell>
+                <TableCell>{getServiceDisplayName(appointment.service_id, appointment.service)}</TableCell>
                 <TableCell>{appointment.staff}</TableCell>
                 <TableCell>
                   <Badge className={getStatusColor(appointment.status)}>
@@ -340,7 +450,9 @@ export function AppointmentList({ searchQuery, appointments, loading, error, onC
                       {appointment.status !== "confirmed" && (
                         <>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive">
+                          <DropdownMenuItem 
+                            onClick={() => handleDelete(appointment)}
+                            className="text-destructive">
                             <Trash className="mr-2 h-4 w-4" />
                             Delete
                           </DropdownMenuItem>

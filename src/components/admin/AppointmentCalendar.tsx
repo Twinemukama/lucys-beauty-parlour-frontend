@@ -14,6 +14,7 @@ interface Appointment {
   customerEmail: string;
   customerPhone: string;
   service: string;
+  service_id: number;
   time: string;
   status: string;
   staff: string;
@@ -48,6 +49,7 @@ function toCalendarAppointment(dto: AppointmentDto): Appointment {
 		customerEmail: dto.customer_email,
 		customerPhone: dto.customer_phone,
 		service: dto.service_description,
+		service_id: dto.service_id,
 		time: toDisplayTime(dto.time),
 		status: dto.status,
 		staff: dto.staff_name,
@@ -130,6 +132,21 @@ export function AppointmentCalendar({
     }
   };
 
+  const getStatusBorderColor = (status: string) => {
+    switch (status) {
+      case "confirmed":
+        return "border-l-primary";
+      case "pending":
+        return "border-l-accent";
+      case "completed":
+        return "border-l-muted-foreground";
+      case "cancelled":
+        return "border-l-destructive";
+      default:
+        return "border-l-muted-foreground";
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Calendar */}
@@ -185,7 +202,7 @@ export function AppointmentCalendar({
 				)}
 
                 {displayedAppointments.map((appointment) => (
-                  <Card key={appointment.id} className="border-l-4 border-l-primary shadow-soft">
+                  <Card key={appointment.id} className={`border-l-4 ${getStatusBorderColor(appointment.status)} shadow-soft`}>
                     <CardContent className="pt-6">
                       <div className="flex flex-col gap-4">
                         <div className="flex items-start justify-between">
@@ -218,7 +235,7 @@ export function AppointmentCalendar({
                         <div className="flex items-center justify-between pt-2 border-t border-border">
                           <div className="text-sm">
                             <span className="text-muted-foreground">Service: </span>
-                            <span className="font-medium">{appointment.service}</span>
+                            <span className="font-medium">{getServiceDisplayName(appointment.service_id, appointment.service)}</span>
                             {appointment.staff && (
                               <>
                                 <span className="text-muted-foreground"> • Staff: </span>
