@@ -20,6 +20,8 @@ interface Appointment {
   status: string;
   staff: string;
   date: Date;
+  price_cents?: number;
+  currency?: string;
 }
 
 interface AppointmentCalendarProps {
@@ -55,6 +57,8 @@ function toCalendarAppointment(dto: AppointmentDto): Appointment {
 		status: dto.status,
 		staff: dto.staff_name,
     date: safeParseDate(normalizedDate),
+		price_cents: dto.price_cents,
+		currency: dto.currency,
 	};
 }
 

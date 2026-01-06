@@ -24,6 +24,7 @@ type MockServiceOption = {
   service: ServiceCategory;
   name: string;
   duration: number;
+  basePrice: number; // in UGX
   descriptions: string[];
 };
 
@@ -35,6 +36,7 @@ const mockServiceOptions: MockServiceOption[] = [
     service: "Hair Styling & Braiding",
     name: "Knotless Braids",
     duration: 120,
+    basePrice: 100000, // UGX
     descriptions: ["Small", "Medium", "Large"],
   },
   {
@@ -42,6 +44,7 @@ const mockServiceOptions: MockServiceOption[] = [
     service: "Hair Styling & Braiding",
     name: "Wig Install",
     duration: 90,
+    basePrice: 150000, // UGX
     descriptions: ["Closure", "Frontal"],
   },
   {
@@ -49,6 +52,7 @@ const mockServiceOptions: MockServiceOption[] = [
     service: "Makeup",
     name: "Soft Glam",
     duration: 75,
+    basePrice: 120000, // UGX
     descriptions: ["Day", "Evening"],
   },
   {
@@ -56,6 +60,7 @@ const mockServiceOptions: MockServiceOption[] = [
     service: "Makeup",
     name: "Bridal Makeup",
     duration: 120,
+    basePrice: 180000, // UGX
     descriptions: ["Bride", "Bridesmaid"],
   },
   {
@@ -63,6 +68,7 @@ const mockServiceOptions: MockServiceOption[] = [
     service: "Nails",
     name: "Gel Manicure",
     duration: 60,
+    basePrice: 80000, // UGX
     descriptions: ["Short", "Medium", "Long"],
   },
   {
@@ -70,9 +76,31 @@ const mockServiceOptions: MockServiceOption[] = [
     service: "Nails",
     name: "Acrylic Full Set",
     duration: 90,
+    basePrice: 110000, // UGX
     descriptions: ["Short", "Medium", "Long"],
   },
 ];
+
+// Pricing modifiers for service descriptions (variants)
+const descriptionPricingMap: Record<string, number> = {
+  // Knotless Braids
+  "Small": 20000,
+  "Medium": 25000,
+  "Large": 30000,
+  // Wig Install
+  "Closure": 15000,
+  "Frontal": 20000,
+  // Soft Glam
+  "Day": 0,
+  "Evening": 10000,
+  // Bridal Makeup
+  "Bride": 20000,
+  "Bridesmaid": 10000,
+  // Gel Manicure & Acrylic Full Set
+  "Short": 0,
+  // "Medium": 5000,
+  "Long": 10000,
+};
 
 const staff = [
   { id: "any", name: "No Preference" },
@@ -102,6 +130,19 @@ const formatLocalDateYYYYMMDD = (date: Date): string => {
   const mm = String(date.getMonth() + 1).padStart(2, "0");
   const dd = String(date.getDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
+};
+
+const calculateTotalPrice = (basePrice: number, description: string): number => {
+  const modifier = descriptionPricingMap[description] || 0;
+  return basePrice + modifier;
+};
+
+const formatPrice = (price: number): string => {
+  return new Intl.NumberFormat("en-UG", {
+    style: "currency",
+    currency: "UGX",
+    minimumFractionDigits: 0,
+  }).format(price);
 };
 
 export const BookingDialog = ({ open, onOpenChange, preSelectedService, isAdmin = false }: BookingDialogProps) => {
@@ -292,6 +333,8 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService, isAdmin 
 
     const staffName =
       selectedStaff && selectedStaff !== "any" ? staff.find((s) => s.id === selectedStaff)?.name || "" : "";
+    
+    const totalPrice = calculateTotalPrice(selectedServiceOption.basePrice, selectedServiceDescription);
 
     try {
       const status: AppointmentStatus = "pending";
@@ -307,6 +350,8 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService, isAdmin 
         service_description: selectedServiceDescription,
         notes: customerInfo.notes,
         status,
+        price_cents: totalPrice,
+        currency: "UGX",
       });
 
       setStep(5);
@@ -389,24 +434,28 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService, isAdmin 
             <div>
               <Label className="text-lg font-playfair mb-4 block">Select {selectedServiceOption.name} Variant</Label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {selectedServiceOption.descriptions.map((desc) => (
-                  <button
-                    key={desc}
-                    type="button"
-                    onClick={() => {
-                      setSelectedServiceDescription(desc);
-                      setStep(2);
-                    }}
-                    className={cn(
-                      "p-4 rounded-lg border-2 transition-smooth text-center font-medium",
-                      selectedServiceDescription === desc
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border hover:border-primary bg-card",
-                    )}
-                  >
-                    {desc}
-                  </button>
-                ))}
+                {selectedServiceOption.descriptions.map((desc) => {
+                  const totalPrice = calculateTotalPrice(selectedServiceOption.basePrice, desc);
+                  return (
+                    <button
+                      key={desc}
+                      type="button"
+                      onClick={() => {
+                        setSelectedServiceDescription(desc);
+                        setStep(2);
+                      }}
+                      className={cn(
+                        "p-4 rounded-lg border-2 transition-smooth text-center font-medium flex flex-col gap-2",
+                        selectedServiceDescription === desc
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border hover:border-primary bg-card",
+                      )}
+                    >
+                      <span>{desc}</span>
+                      <span className="text-xs opacity-75">{formatPrice(totalPrice)}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
             <div className="flex justify-between">
@@ -589,7 +638,7 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService, isAdmin 
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Service:</span>
                 <span className="font-medium">
-                  {selectedServiceOption?.name}
+                  {selectedServiceOption?.name} ({selectedServiceDescription})
                 </span>
               </div>
               <div className="flex justify-between">
@@ -608,6 +657,12 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService, isAdmin 
                   </span>
                 </div>
               )}
+              <div className="border-t border-border pt-3 flex justify-between">
+                <span className="text-muted-foreground font-semibold">Total Price:</span>
+                <span className="font-playfair text-lg text-primary">
+                  {selectedServiceOption && formatPrice(calculateTotalPrice(selectedServiceOption.basePrice, selectedServiceDescription))}
+                </span>
+              </div>
             </div>
 
             <Button
