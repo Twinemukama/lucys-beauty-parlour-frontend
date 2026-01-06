@@ -296,6 +296,7 @@ const AdminDashboard = () => {
       <BookingDialog
         open={addDialogOpen}
         onOpenChange={handleBookingDialogClose}
+        isAdmin
       />
       
       {/* Add Portfolio Dialog */}

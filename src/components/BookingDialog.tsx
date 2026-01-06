@@ -14,6 +14,7 @@ interface BookingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   preSelectedService?: string;
+  isAdmin?: boolean;
 }
 
 type ServiceCategory = "Hair Styling & Braiding" | "Makeup" | "Nails";
@@ -76,7 +77,7 @@ const mockServiceOptions: MockServiceOption[] = [
 const staff = [
   { id: "any", name: "No Preference" },
   { id: "lucy", name: "Lucy" },
-  { id: "lonnie", name: "Lonnet" },
+  { id: "lonnet", name: "Lonnet" },
   { id: "spe", name: "Spe" },
   { id: "truth", name: "Truth" },
   { id: "jim", name: "Jim" },
@@ -87,9 +88,9 @@ const staff = [
 
 const generateTimeSlots = () => {
   const slots = [];
-  for (let hour = 9; hour < 19; hour++) {
+  for (let hour = 8; hour < 20; hour++) {
     slots.push(`${hour.toString().padStart(2, '0')}:00`);
-    if (hour < 18) {
+    if (hour < 19) {
       slots.push(`${hour.toString().padStart(2, '0')}:30`);
     }
   }
@@ -103,7 +104,7 @@ const formatLocalDateYYYYMMDD = (date: Date): string => {
   return `${yyyy}-${mm}-${dd}`;
 };
 
-export const BookingDialog = ({ open, onOpenChange, preSelectedService }: BookingDialogProps) => {
+export const BookingDialog = ({ open, onOpenChange, preSelectedService, isAdmin = false }: BookingDialogProps) => {
   const { toast } = useToast();
   const MAX_BOOKINGS_PER_DAY = 20;
   const [step, setStep] = useState(1);
@@ -158,6 +159,21 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService }: Bookin
     return d;
   }, []);
 
+  const isSelectedDateToday = selectedDate
+    ? selectedDate.toDateString() === new Date().toDateString()
+    : false;
+
+  const isTimeSlotBlocked = (time: string) => {
+    if (isAdmin) return false;
+    if (!selectedDate || !isSelectedDateToday) return false;
+
+    const [hourStr, minuteStr] = time.split(":");
+    const slotDate = new Date(selectedDate);
+    slotDate.setHours(Number(hourStr), Number(minuteStr), 0, 0);
+
+    return slotDate.getTime() <= Date.now();
+  };
+
   useEffect(() => {
     let cancelled = false;
 
@@ -207,6 +223,12 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService }: Bookin
     };
   }, [selectedDate, MAX_BOOKINGS_PER_DAY, toast, lastCapacityToastDate]);
 
+  useEffect(() => {
+    if (isAdmin) return;
+    if (!selectedDate || !selectedTime || !isSelectedDateToday) return;
+    if (isTimeSlotBlocked(selectedTime)) setSelectedTime("");
+  }, [isAdmin, isSelectedDateToday, selectedDate, selectedTime]);
+
   const handleNext = () => {
     if (step < 4) setStep(step + 1);
   };
@@ -236,6 +258,15 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService }: Bookin
       toast({
         title: "Missing date/time",
         description: "Please choose a date and time.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isTimeSlotBlocked(selectedTime)) {
+      toast({
+        title: "Time slot unavailable",
+        description: "Please choose a time later than the current time for today.",
         variant: "destructive",
       });
       return;
@@ -443,20 +474,29 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService }: Bookin
             <div>
               <Label className="text-lg font-playfair mb-4 block">Choose Time</Label>
               <div className="grid grid-cols-4 gap-3 max-h-96 overflow-y-auto">
-                {timeSlots.map((time) => (
-                  <button
-                    key={time}
-                    onClick={() => setSelectedTime(time)}
-                    className={cn(
-                      "p-3 rounded-md border transition-smooth text-center font-medium",
-                      selectedTime === time
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border hover:border-primary"
-                    )}
-                  >
-                    {time}
-                  </button>
-                ))}
+                {timeSlots.map((time) => {
+                  const disabled = isTimeSlotBlocked(time);
+
+                  return (
+                    <button
+                      key={time}
+                      onClick={() => {
+                        if (disabled) return;
+                        setSelectedTime(time);
+                      }}
+                      disabled={disabled}
+                      className={cn(
+                        "p-3 rounded-md border transition-smooth text-center font-medium",
+                        selectedTime === time
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border hover:border-primary",
+                        disabled && "opacity-50 cursor-not-allowed hover:border-border"
+                      )}
+                    >
+                      {time}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
