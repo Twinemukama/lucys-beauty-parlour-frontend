@@ -77,6 +77,8 @@ export type CreateAppointmentRequest = {
 	time: string; // HH:MM
 	status: AppointmentStatus;
 	notes?: string;
+	price_cents: number; // in UGX (stored as "cents" but UGX has no subunits)
+	currency?: string;
 };
 
 export type AppointmentDto = {
@@ -91,6 +93,8 @@ export type AppointmentDto = {
 	time: string;
 	status: AppointmentStatus;
 	notes?: string;
+	price_cents?: number;
+	currency?: string;
 };
 
 function coerceApposetintmentsPayload(payload: unknown): AppointmentDto[] {

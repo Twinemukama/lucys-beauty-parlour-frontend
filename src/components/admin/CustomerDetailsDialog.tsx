@@ -27,6 +27,8 @@ interface Customer {
   staff: string;
   status: string;
   notes: string;
+  price_cents?: number;
+  currency?: string;
 }
 
 interface CustomerDetailsDialogProps {
@@ -237,6 +239,18 @@ export function CustomerDetailsDialog({ open, onOpenChange, customer, onConfirm,
                   <p className="font-medium">{customer.staff}</p>
                 </div>
               </div>
+              {customer.price_cents !== undefined && customer.price_cents !== null && (
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Price</p>
+                  <p className="font-medium text-primary">
+                    {new Intl.NumberFormat("en-UG", {
+                      style: "currency",
+                      currency: customer.currency || "UGX",
+                      minimumFractionDigits: 0,
+                    }).format(customer.price_cents)}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 

@@ -24,6 +24,8 @@ interface CalendarAppointment {
   status: string;
   staff: string;
   date: Date;
+  price_cents?: number;
+  currency?: string;
 }
 
 interface CustomerDetails {
@@ -39,6 +41,8 @@ interface CustomerDetails {
   staff: string;
   status: string;
   notes: string;
+  price_cents?: number;
+  currency?: string;
 }
 
 const AdminDashboard = () => {
@@ -80,6 +84,8 @@ const AdminDashboard = () => {
       staff: appointment.staff,
       status: appointment.status,
       notes: "",
+      price_cents: appointment.price_cents,
+      currency: appointment.currency,
     };
     setSelectedCustomer(customerDetails);
     setCustomerDetailsOpen(true);
