@@ -173,13 +173,13 @@ const AdminDashboard = () => {
   
   const todaysAppointments = appointments.filter(apt => apt.date === todayStr).length;
   const todaysConfirmedAppointments = appointments.filter(apt => apt.date === todayStr && apt.status === "confirmed").length;
-  const pendingAppointments = appointments.filter(apt => apt.status === "pending").length;
-  const totalAppointments = appointments.length;
+  const pendingAppointments = appointments.filter(apt => apt.date === todayStr && apt.status === "pending").length;
+  const totalAppointments = appointments.filter(apt => apt.status === "confirmed").length;
 
   const stats = [
     { label: "Today's Appointments", value: todaysAppointments.toString(), icon: CalendarIcon, color: "text-primary" },
     { label: "Today's Confirmed", value: todaysConfirmedAppointments.toString(), icon: CheckCircle, color: "text-primary" },
-    { label: "Pending Confirmations", value: pendingAppointments.toString(), icon: Clock, color: "text-accent" },
+    { label: "Today's Pending", value: pendingAppointments.toString(), icon: Clock, color: "text-accent" },
     { label: "Total Appointments", value: totalAppointments.toString(), icon: Users, color: "text-rose-gold" },
   ];
 

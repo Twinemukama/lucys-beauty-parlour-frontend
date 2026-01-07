@@ -435,7 +435,6 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService, isAdmin 
               <Label className="text-lg font-playfair mb-4 block">Select {selectedServiceOption.name} Variant</Label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {selectedServiceOption.descriptions.map((desc) => {
-                  const totalPrice = calculateTotalPrice(selectedServiceOption.basePrice, desc);
                   return (
                     <button
                       key={desc}
@@ -452,7 +451,6 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService, isAdmin 
                       )}
                     >
                       <span>{desc}</span>
-                      <span className="text-xs opacity-75">{formatPrice(totalPrice)}</span>
                     </button>
                   );
                 })}
@@ -604,6 +602,14 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService, isAdmin 
                   onChange={(e) => setCustomerInfo({ ...customerInfo, notes: e.target.value })}
                   placeholder="Any special requirements or preferences"
                 />
+              </div>
+            </div>
+
+            {/* Read-only total price before confirm */}
+            <div className="pt-2">
+              <Label className="text-sm text-muted-foreground">Total Price</Label>
+              <div className="mt-1 text-lg font-playfair text-primary">
+                {selectedServiceOption ? formatPrice(calculateTotalPrice(selectedServiceOption.basePrice, selectedServiceDescription)) : "-"}
               </div>
             </div>
 
