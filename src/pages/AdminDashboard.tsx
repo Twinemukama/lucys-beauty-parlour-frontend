@@ -11,6 +11,7 @@ import { BookingDialog } from "@/components/BookingDialog";
 import { AddPortfolioDialog } from "@/components/admin/AddPortfolioDialog";
 import { CustomerDetailsDialog } from "@/components/admin/CustomerDetailsDialog";
 import { ChangePasswordDialog } from "@/components/admin/ChangePasswordDialog";
+import { MenuItemsManager } from "@/components/admin/MenuItemsManager";
 import { clearAdminAccessToken, getAdminAccessToken, listAdminAppointments, type AppointmentDto } from "@/apis/bookings";
 
 interface CalendarAppointment {
@@ -255,9 +256,10 @@ const AdminDashboard = () => {
 
         {/* Main Content - Tabs */}
         <Tabs defaultValue="calendar" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3">
             <TabsTrigger value="calendar">Calendar View</TabsTrigger>
             <TabsTrigger value="list">List View</TabsTrigger>
+            <TabsTrigger value="menu">Menu Items</TabsTrigger>
           </TabsList>
 
           <TabsContent value="calendar" className="space-y-6">
@@ -292,6 +294,18 @@ const AdminDashboard = () => {
 					loading={appointmentsLoading}
 					error={appointmentsError}
 				/>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="menu" className="space-y-6">
+            <Card className="shadow-elegant">
+              <CardHeader>
+                <CardTitle className="font-playfair">Pricing Menu Items</CardTitle>
+                <CardDescription>Create, update, and delete services shown on the public menu</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <MenuItemsManager />
               </CardContent>
             </Card>
           </TabsContent>
