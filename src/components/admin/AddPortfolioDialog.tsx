@@ -31,8 +31,11 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { createAdminServiceItem } from "@/apis/adminServiceItems";
+import type { ServiceCategory } from "@/apis/serviceItems";
 
 interface AddPortfolioDialogProps {
   open: boolean;
@@ -58,6 +61,7 @@ export function AddPortfolioDialog({ open, onOpenChange }: AddPortfolioDialogPro
   const [formData, setFormData] = useState({
     category: "",
     style: "",
+    description: "",
     imageFile: null as File | null,
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -97,7 +101,7 @@ export function AddPortfolioDialog({ open, onOpenChange }: AddPortfolioDialogPro
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.category || !formData.style || !formData.imageFile) {
+    if (!formData.category || !formData.style || !formData.description.trim() || !formData.imageFile || !imagePreview) {
       toast({
         title: "Missing fields",
         description: "Please fill in all required fields.",
@@ -107,22 +111,36 @@ export function AddPortfolioDialog({ open, onOpenChange }: AddPortfolioDialogPro
     }
 
     setIsSubmitting(true);
-    
-    // Simulate API call - replace with actual backend integration
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast({
-      title: "Portfolio item added",
-      description: `"${formData.style}" has been added to ${serviceCategories.find(c => c.id === formData.category)?.label}.`,
-    });
-    
-    handleReset();
-    setIsSubmitting(false);
-    onOpenChange(false);
+
+		try {
+			await createAdminServiceItem({
+				service: formData.category as ServiceCategory,
+				name: formData.style.trim(),
+				descriptions: [formData.description.trim()],
+				images: [imagePreview],
+			});
+
+			toast({
+				title: "Portfolio item added",
+				description: `"${formData.style}" has been added to ${serviceCategories.find((c) => c.id === formData.category)?.label}.`,
+			});
+
+			handleReset();
+			onOpenChange(false);
+		} catch (err: unknown) {
+			const message = err instanceof Error ? err.message : "Failed to add portfolio item";
+			toast({
+				title: "Failed to add portfolio",
+				description: message,
+				variant: "destructive",
+			});
+		} finally {
+			setIsSubmitting(false);
+		}
   };
 
   const handleReset = () => {
-    setFormData({ category: "", style: "", imageFile: null });
+    setFormData({ category: "", style: "", description: "", imageFile: null });
     setImagePreview(null);
     setNewStyleInput("");
     if (fileInputRef.current) {
@@ -330,6 +348,20 @@ export function AddPortfolioDialog({ open, onOpenChange }: AddPortfolioDialogPro
               )}
             </div>
           </div>
+
+      {/* Description */}
+      <div className="space-y-2">
+        <Label htmlFor="description" className="text-sm font-medium">
+          Description <span className="text-destructive">*</span>
+        </Label>
+        <Textarea
+          id="description"
+          value={formData.description}
+          onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+          placeholder="Short description shown in the gallery"
+          rows={3}
+        />
+      </div>
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
