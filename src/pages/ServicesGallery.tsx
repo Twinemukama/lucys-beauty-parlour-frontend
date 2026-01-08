@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Scissors, Sparkles, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { BookingDialog } from "@/components/BookingDialog";
+import { listServiceItems, resolveServiceItemImageUrl, type ServiceCategory, type ServiceItemDto } from "@/apis/serviceItems";
 
 const categories = [
   { id: "hair", label: "Hair", fullLabel: "Hair Styling & Braiding", icon: Scissors },
@@ -20,37 +21,57 @@ const bookingServiceByTab: Record<string, string> = {
   nails: "Nails",
 };
 
-const galleryItems = {
-  hair: [
-    { id: 1, title: "Elegant Updo", description: "Perfect for weddings and special occasions", image: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=500&fit=crop" },
-    { id: 2, title: "Box Braids", description: "Protective styling with intricate patterns", image: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=500&fit=crop" },
-    { id: 3, title: "Cornrows", description: "Classic braided elegance", image: "https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?w=400&h=500&fit=crop" },
-    { id: 4, title: "Romantic Waves", description: "Soft, flowing curls for any event", image: "https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=400&h=500&fit=crop" },
-    { id: 5, title: "Sleek Straight", description: "Glossy, smooth finish", image: "https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=400&h=500&fit=crop" },
-    { id: 6, title: "Braided Crown", description: "Intricate braiding artistry", image: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=400&h=500&fit=crop" },
-  ],
-  makeup: [
-    { id: 1, title: "Bridal Glam", description: "Radiant looks for your special day", image: "https://images.unsplash.com/photo-1487412912498-0447578fcca8?w=400&h=500&fit=crop" },
-    { id: 2, title: "Natural Beauty", description: "Enhanced everyday elegance", image: "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=400&h=500&fit=crop" },
-    { id: 3, title: "Smokey Eye", description: "Dramatic evening glamour", image: "https://images.unsplash.com/photo-1503236823255-94609f598e71?w=400&h=500&fit=crop" },
-    { id: 4, title: "Bold Lip", description: "Statement color impact", image: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=400&h=500&fit=crop" },
-    { id: 5, title: "Dewy Skin", description: "Fresh, luminous complexion", image: "https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=400&h=500&fit=crop" },
-    { id: 6, title: "Editorial Look", description: "Creative artistic expression", image: "https://images.unsplash.com/photo-1526510747491-312da4e9b320?w=400&h=500&fit=crop" },
-  ],
-  nails: [
-    { id: 1, title: "French Manicure", description: "Classic elegance for every occasion", image: "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=500&fit=crop" },
-    { id: 2, title: "Gel Art Design", description: "Creative patterns and colors", image: "https://images.unsplash.com/photo-1632345031435-8727f6897d53?w=400&h=500&fit=crop" },
-    { id: 3, title: "Ombre Nails", description: "Gradient color perfection", image: "https://images.unsplash.com/photo-1607779097040-26e80aa78e66?w=400&h=500&fit=crop" },
-    { id: 4, title: "Marble Effect", description: "Luxurious stone-inspired design", image: "https://images.unsplash.com/photo-1519014816548-bf5fe059798b?w=400&h=500&fit=crop" },
-    { id: 5, title: "Glitter Accent", description: "Sparkle and shine", image: "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=500&fit=crop" },
-    { id: 6, title: "Minimalist Lines", description: "Modern geometric elegance", image: "https://images.unsplash.com/photo-1571290274554-6a2eaa771e5f?w=400&h=500&fit=crop" },
-  ],
+type GalleryCard = {
+	id: number;
+	title: string;
+	description: string;
+	image: string;
 };
 
 export default function ServicesGallery() {
   const [selectedImage, setSelectedImage] = useState<{ title: string; image: string; description: string } | null>(null);
   const [activeTab, setActiveTab] = useState("hair");
   const [bookingOpen, setBookingOpen] = useState(false);
+  const [items, setItems] = useState<ServiceItemDto[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const controller = new AbortController();
+
+    setLoading(true);
+    setError(null);
+    listServiceItems({ category: activeTab as ServiceCategory, limit: 100, offset: 0, signal: controller.signal })
+      .then((res) => {
+        if (cancelled) return;
+        setItems(res?.data || []);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        const message = err instanceof Error ? err.message : "Failed to load gallery";
+        setError(message);
+        setItems([]);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [activeTab]);
+
+  const cards: GalleryCard[] = useMemo(() => {
+    return (items || []).map((it) => ({
+      id: it.id,
+      title: it.name,
+      description: (it.descriptions && it.descriptions.length > 0 ? it.descriptions[0] : "").trim(),
+      image: resolveServiceItemImageUrl(it.images?.[0] || ""),
+    }));
+  }, [items]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -98,10 +119,17 @@ export default function ServicesGallery() {
               ))}
             </TabsList>
 
-            {Object.entries(galleryItems).map(([category, items]) => (
-              <TabsContent key={category} value={category} className="mt-0">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {items.map((item, index) => (
+            {categories.map((categoryObj) => (
+              <TabsContent key={categoryObj.id} value={categoryObj.id} className="mt-0">
+					{loading ? (
+						<div className="text-center text-muted-foreground py-12">Loading gallery…</div>
+					) : error ? (
+						<div className="text-center text-destructive py-12">{error}</div>
+					) : cards.length === 0 ? (
+						<div className="text-center text-muted-foreground py-12">No items yet.</div>
+					) : (
+						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+							{cards.map((item, index) => (
                     <Card
                       key={item.id}
                       className="group overflow-hidden border-border bg-card cursor-pointer hover:shadow-elegant transition-smooth animate-in fade-in slide-in-from-bottom-8 duration-500"
@@ -125,8 +153,9 @@ export default function ServicesGallery() {
                         </div>
                       </AspectRatio>
                     </Card>
-                  ))}
-                </div>
+							))}
+						</div>
+					)}
               </TabsContent>
             ))}
           </Tabs>
