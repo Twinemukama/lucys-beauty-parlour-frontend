@@ -168,12 +168,12 @@ export function MenuItemsManager() {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex items-center justify-between gap-4">
+			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 				<div>
 					<h3 className="text-lg font-semibold font-playfair">Menu Items</h3>
 					<p className="text-sm text-muted-foreground">Add, edit, and delete pricing menu items.</p>
 				</div>
-				<Button onClick={() => setCreateOpen(true)} className="gap-2">
+				<Button onClick={() => setCreateOpen(true)} className="gap-2 w-full sm:w-auto">
 					<Plus className="h-4 w-4" />
 					Add Menu Item
 				</Button>
@@ -182,7 +182,7 @@ export function MenuItemsManager() {
 			{isLoading ? <p className="text-sm text-muted-foreground">Loading menu items…</p> : null}
 			{isError ? <p className="text-sm text-muted-foreground">Failed to load menu items.</p> : null}
 
-			<Table>
+			<Table className="min-w-[760px]">
 				<TableHeader>
 					<TableRow>
 						<TableHead>Category</TableHead>
