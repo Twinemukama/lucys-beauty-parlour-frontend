@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar as CalendarIcon, Clock, Users, Plus, Search, Filter, LogOut, ImagePlus, Key, CheckCircle } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Users, Plus, Search, Filter, LogOut, ImagePlus, Key, CheckCircle, Menu } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { AppointmentCalendar } from "@/components/admin/AppointmentCalendar";
 import { AppointmentList } from "@/components/admin/AppointmentList";
 import { BookingDialog } from "@/components/BookingDialog";
@@ -188,12 +189,13 @@ const AdminDashboard = () => {
       {/* Header */}
       <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <h1 className="text-3xl font-playfair font-bold text-foreground">Admin Dashboard</h1>
               <p className="text-muted-foreground">Lucy's Beauty Parlour</p>
             </div>
-            <div className="flex items-center gap-3">
+            {/* Desktop actions */}
+            <div className="hidden md:flex items-center gap-3">
               <Button onClick={() => setAddDialogOpen(true)} className="gap-2">
                 <Plus className="h-4 w-4" />
                 New Appointment
@@ -210,6 +212,56 @@ const AdminDashboard = () => {
                 <LogOut className="h-4 w-4" />
                 Logout
               </Button>
+            </div>
+
+            {/* Mobile actions */}
+            <div className="flex md:hidden items-center gap-2">
+              <Button onClick={() => setAddDialogOpen(true)} className="gap-2 flex-1">
+                <Plus className="h-4 w-4" />
+                New
+              </Button>
+
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <Menu className="h-4 w-4" />
+                    Menu
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-full sm:max-w-sm">
+                  <SheetHeader>
+                    <SheetTitle>Admin actions</SheetTitle>
+                    <SheetDescription>Quick actions for managing bookings and settings.</SheetDescription>
+                  </SheetHeader>
+
+                  <div className="mt-6 space-y-3">
+                    <Button onClick={() => setAddDialogOpen(true)} className="w-full justify-start gap-2">
+                      <Plus className="h-4 w-4" />
+                      New Appointment
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => setPortfolioDialogOpen(true)}
+                      className="w-full justify-start gap-2"
+                    >
+                      <ImagePlus className="h-4 w-4" />
+                      Add Portfolio
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() => setChangePasswordOpen(true)}
+                      className="w-full justify-start gap-2"
+                    >
+                      <Key className="h-4 w-4" />
+                      Change Password
+                    </Button>
+                    <Button variant="outline" onClick={handleLogout} className="w-full justify-start gap-2">
+                      <LogOut className="h-4 w-4" />
+                      Logout
+                    </Button>
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
         </div>
@@ -256,10 +308,10 @@ const AdminDashboard = () => {
 
         {/* Main Content - Tabs */}
         <Tabs defaultValue="calendar" className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl grid-cols-3">
-            <TabsTrigger value="calendar">Calendar View</TabsTrigger>
-            <TabsTrigger value="list">List View</TabsTrigger>
-            <TabsTrigger value="menu">Menu Items</TabsTrigger>
+          <TabsList className="grid h-auto w-full grid-cols-1 gap-1 sm:max-w-2xl sm:grid-cols-3">
+            <TabsTrigger value="calendar" className="w-full justify-start sm:justify-center">Calendar View</TabsTrigger>
+            <TabsTrigger value="list" className="w-full justify-start sm:justify-center">List View</TabsTrigger>
+            <TabsTrigger value="menu" className="w-full justify-start sm:justify-center">Menu Items</TabsTrigger>
           </TabsList>
 
           <TabsContent value="calendar" className="space-y-6">

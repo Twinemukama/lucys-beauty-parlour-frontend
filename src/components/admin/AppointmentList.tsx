@@ -366,7 +366,7 @@ export function AppointmentList({ searchQuery, appointments, loading, error, onC
 			<div className="text-center py-12 text-destructive">{error}</div>
 		)}
 
-        <Table>
+        <Table className="min-w-[820px]">
           <TableHeader>
             <TableRow className="bg-muted/50">
               <TableHead>Date & Time</TableHead>
@@ -463,7 +463,7 @@ export function AppointmentList({ searchQuery, appointments, loading, error, onC
 
       {/* Pagination */}
 		{!loading && !error && totalPages > 1 && (
-        <div className="flex items-center justify-between mt-4">
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">
             Showing {((validCurrentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(validCurrentPage * ITEMS_PER_PAGE, filteredAppointments.length)} of {filteredAppointments.length} appointments
           </p>

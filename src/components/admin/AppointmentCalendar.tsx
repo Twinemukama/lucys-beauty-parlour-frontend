@@ -237,8 +237,8 @@ export function AppointmentCalendar({
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between pt-2 border-t border-border">
-                          <div className="text-sm">
+                        <div className="flex flex-col gap-3 pt-2 border-t border-border sm:flex-row sm:items-center sm:justify-between">
+                          <div className="text-sm break-words">
                             <span className="text-muted-foreground">Service: </span>
                             <span className="font-medium">{getServiceDisplayName(appointment.service_id, appointment.service)}</span>
                             {appointment.staff && (
@@ -251,6 +251,7 @@ export function AppointmentCalendar({
                           <Button 
                             variant="outline" 
                             size="sm"
+                            className="w-full sm:w-auto"
                             onClick={() => onViewAppointment?.(appointment)}
                           >
                             View
