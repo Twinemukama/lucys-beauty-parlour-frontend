@@ -1,27 +1,39 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, ArrowLeft } from "lucide-react";
+import { adminForgotPassword } from "@/apis/bookings";
 
 export default function ForgotPassword() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [email, setEmail] = useState("");
 
   const handleResetRequest = async () => {
     setIsLoading(true);
 
-    // TODO: Replace with actual password reset API call
-    setTimeout(() => {
+    try {
+      await adminForgotPassword({ email: email.trim() });
       setEmailSent(true);
       toast({
-        title: "Reset link sent",
-        description: "Please check your admin email for the password reset link.",
+        title: "If the email exists, a link was sent",
+        description: "Please check your inbox (and spam folder) for the password reset link.",
       });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Request failed";
+      toast({
+        title: "Could not send reset link",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -72,10 +84,21 @@ export default function ForgotPassword() {
               </div>
             ) : (
               <div className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="email">Admin email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="admin@lucysbeauty.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
                 <Button 
                   onClick={handleResetRequest} 
                   className="w-full" 
-                  disabled={isLoading}
+            disabled={isLoading || !email.trim()}
                 >
                   {isLoading ? "Sending..." : "Send Reset Link"}
                 </Button>
