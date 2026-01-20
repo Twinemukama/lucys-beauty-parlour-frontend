@@ -66,6 +66,23 @@ export type AdminLoginResponse = {
 	access_token: string;
 };
 
+export type AdminForgotPasswordRequest = {
+	email: string;
+};
+
+export type AdminForgotPasswordResponse = {
+	message: string;
+};
+
+export type AdminChangePasswordRequest = {
+	token: string;
+	new_password: string;
+};
+
+export type AdminChangePasswordResponse = {
+	message: string;
+};
+
 export type CreateAppointmentRequest = {
 	customer_name: string;
 	customer_email: string;
@@ -161,6 +178,51 @@ export async function adminLogin(input: AdminLoginRequest): Promise<AdminLoginRe
 	}
 
 	return (await res.json()) as AdminLoginResponse;
+}
+
+/** Calls the backend route: POST /admin/forgot-password (handlers.ForgotPassword) */
+export async function adminForgotPassword(input: AdminForgotPasswordRequest): Promise<AdminForgotPasswordResponse> {
+	const res = await fetch(`${API_BASE_URL}/admin/forgot-password`, {
+		method: "POST",
+		headers: {
+			Accept: "application/json",
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify(input),
+		credentials: "include",
+	});
+
+	if (!res.ok) {
+		const body = await readErrorBody(res);
+		const message = extractErrorMessage(body, res.statusText || "Request failed");
+		throw new ApiError(message, res.status, body);
+	}
+
+	return (await res.json()) as AdminForgotPasswordResponse;
+}
+
+/** Calls the backend route: POST /admin/change-password (handlers.ChangePassword) */
+export async function adminChangePassword(input: AdminChangePasswordRequest): Promise<AdminChangePasswordResponse> {
+	const res = await fetch(`${API_BASE_URL}/admin/change-password`, {
+		method: "POST",
+		headers: {
+			Accept: "application/json",
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify(input),
+		credentials: "include",
+	});
+
+	if (!res.ok) {
+		const body = await readErrorBody(res);
+		let message = extractErrorMessage(body, res.statusText || "Request failed");
+		if (res.status === 401 && (!message || message.toLowerCase() === "unauthorized")) {
+			message = "Invalid or expired reset token.";
+		}
+		throw new ApiError(message, res.status, body);
+	}
+
+	return (await res.json()) as AdminChangePasswordResponse;
 }
 
 /** Calls the backend route: POST /appointments (h.CreateAppointment) */

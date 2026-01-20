@@ -6,11 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Lock, Eye, EyeOff, CheckCircle } from "lucide-react";
+import { adminChangePassword } from "@/apis/bookings";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
+	const token = (searchParams.get("token") || "").trim();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -22,6 +24,15 @@ export default function ResetPassword() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!token) {
+      toast({
+        title: "Missing reset token",
+        description: "Please open the password reset link from your email again.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       toast({
@@ -43,16 +54,23 @@ export default function ResetPassword() {
 
     setIsLoading(true);
 
-    // TODO: Replace with actual password reset API call
-    // The token from the email link would be in searchParams.get('token')
-    setTimeout(() => {
+    try {
+      await adminChangePassword({ token, new_password: formData.password });
       setResetSuccess(true);
       toast({
         title: "Password reset successful",
         description: "You can now log in with your new password.",
       });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Reset failed";
+      toast({
+        title: "Reset failed",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   if (resetSuccess) {
@@ -101,7 +119,7 @@ export default function ResetPassword() {
           <CardHeader className="text-center pb-4">
             <CardTitle className="text-2xl font-playfair">Set New Password</CardTitle>
             <CardDescription>
-              Enter your new password below.
+					{token ? "Enter your new password below." : "This reset link is missing a token."}
             </CardDescription>
           </CardHeader>
           <CardContent>
