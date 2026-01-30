@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { format, parse } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { updateAdminAppointment, getAdminAppointment, AppointmentDto } from "@/apis/bookings";
 
 export interface Appointment {
   id: string;
@@ -44,25 +45,122 @@ interface EditAppointmentDialogProps {
   onSave?: (appointment: Appointment) => void;
 }
 
-const services = [
-  { name: "Hair Styling & Braiding", duration: "60 min" },
-  { name: "Makeup Artistry", duration: "60 min" },
-  { name: "Nails Studio", duration: "90 min" },
-  { name: "Facial Treatment", duration: "45 min" },
-  { name: "Waxing", duration: "30 min" },
+// Using same mock service options as BookingDialog
+type MockServiceOption = {
+  id: number;
+  service: string;
+  name: string;
+  duration: number;
+  basePrice: number;
+  descriptions: string[];
+};
+
+const mockServiceOptions: MockServiceOption[] = [
+  {
+    id: 1,
+    service: "Hair Styling & Braiding",
+    name: "Knotless Braids",
+    duration: 120,
+    basePrice: 100000,
+    descriptions: ["Small", "Medium", "Large"],
+  },
+  {
+    id: 2,
+    service: "Hair Styling & Braiding",
+    name: "Wig Install",
+    duration: 90,
+    basePrice: 150000,
+    descriptions: ["Closure", "Frontal"],
+  },
+  {
+    id: 3,
+    service: "Makeup",
+    name: "Soft Glam",
+    duration: 75,
+    basePrice: 120000,
+    descriptions: ["Day", "Evening"],
+  },
+  {
+    id: 4,
+    service: "Makeup",
+    name: "Bridal Makeup",
+    duration: 120,
+    basePrice: 180000,
+    descriptions: ["Bride", "Bridesmaid"],
+  },
+  {
+    id: 5,
+    service: "Nails",
+    name: "Gel Manicure",
+    duration: 60,
+    basePrice: 80000,
+    descriptions: ["Short", "Medium", "Long"],
+  },
+  {
+    id: 6,
+    service: "Nails",
+    name: "Acrylic Full Set",
+    duration: 90,
+    basePrice: 110000,
+    descriptions: ["Short", "Medium", "Long"],
+  },
 ];
 
+// Using same staff list as BookingDialog
 const staff = [
-  { id: "1", name: "Emma" },
-  { id: "2", name: "Sophie" },
+  { id: "any", name: "No Preference" },
+  { id: "lucy", name: "Lucy" },
+  { id: "lonnet", name: "Lonnet" },
+  { id: "spe", name: "Spe" },
+  { id: "truth", name: "Truth" },
+  { id: "jim", name: "Jim" },
+  { id: "destiny", name: "Destiny" },
+  { id: "joan", name: "Joan" },
+  { id: "gift", name: "Gift" },
 ];
 
-const timeSlots = [
-  "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM",
-  "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM",
-  "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM",
-  "06:00 PM", "06:30 PM",
-];
+// Using same time slot generation as BookingDialog
+const generateTimeSlots = () => {
+  const slots = [];
+  for (let hour = 8; hour < 20; hour++) {
+    slots.push(`${hour.toString().padStart(2, '0')}:00`);
+    if (hour < 19) {
+      slots.push(`${hour.toString().padStart(2, '0')}:30`);
+    }
+  }
+  return slots;
+};
+
+const timeSlots = generateTimeSlots();
+
+// Convert 24-hour time format (HH:MM) to display format
+const convertTo12Hour = (time24: string): string => {
+  const match = /^([01]\d|2[0-3]):([0-5]\d)/.exec(time24);
+  if (!match) return time24;
+  const hours24 = Number(match[1]);
+  const minutes = match[2];
+  const suffix = hours24 >= 12 ? "PM" : "AM";
+  const hours12 = ((hours24 + 11) % 12) + 1;
+  return `${hours12}:${minutes} ${suffix}`;
+};
+
+// Convert 12-hour time format to 24-hour (HH:MM)
+const convertTo24Hour = (displayTime: string): string => {
+  const match = /^(\d{1,2}):(\d{2})\s(AM|PM)$/.exec(displayTime.trim());
+  if (!match) return displayTime;
+  
+  let hours = Number(match[1]);
+  const minutes = match[2];
+  const period = match[3];
+  
+  if (period === "PM" && hours !== 12) {
+    hours += 12;
+  } else if (period === "AM" && hours === 12) {
+    hours = 0;
+  }
+  
+  return `${String(hours).padStart(2, "0")}:${minutes}`;
+};
 
 const statuses = [
   { value: "pending", label: "Pending" },
@@ -79,6 +177,8 @@ export function EditAppointmentDialog({
 }: EditAppointmentDialogProps) {
   const { toast } = useToast();
   const [date, setDate] = useState<Date>();
+  const [loading, setLoading] = useState(false);
+  const [serviceId, setServiceId] = useState<number>(0);
   const [formData, setFormData] = useState({
     customerName: "",
     customerEmail: "",
@@ -91,57 +191,114 @@ export function EditAppointmentDialog({
   });
 
   useEffect(() => {
-    if (appointment) {
-      setFormData({
-        customerName: appointment.customerName,
-        customerEmail: appointment.customerEmail,
-        customerPhone: appointment.customerPhone,
-        service: appointment.service,
-        staff: appointment.staff,
-        time: appointment.time,
-        status: appointment.status,
-        notes: appointment.notes || "",
-      });
-      // Parse the date string - try ISO format first, then other formats
-      try {
-        let parsedDate = new Date(appointment.date);
-        if (isNaN(parsedDate.getTime())) {
-          parsedDate = parse(appointment.date, "MMM d, yyyy", new Date());
-        }
-        if (!isNaN(parsedDate.getTime())) {
-          setDate(parsedDate);
-        } else {
-          setDate(undefined);
-        }
-      } catch {
-        setDate(undefined);
-      }
+    if (open && appointment) {
+      setLoading(true);
+      // Fetch full appointment details from backend
+      getAdminAppointment(Number(appointment.id))
+        .then((fullAppointment: AppointmentDto) => {
+          // Create composite key for service selection (serviceId:description)
+          const serviceKey = `${fullAppointment.service_id}:${fullAppointment.service_description}`;
+          
+          setFormData({
+            customerName: fullAppointment.customer_name,
+            customerEmail: fullAppointment.customer_email,
+            customerPhone: fullAppointment.customer_phone,
+            service: serviceKey,
+            staff: fullAppointment.staff_name || "",
+            time: convertTo12Hour(fullAppointment.time),
+            status: fullAppointment.status,
+            notes: fullAppointment.notes || "",
+          });
+          setServiceId(fullAppointment.service_id);
+          
+          // Parse the date string - backend returns YYYY-MM-DD format
+          try {
+            let parsedDate: Date | undefined;
+            
+            if (/^\d{4}-\d{2}-\d{2}$/.test(fullAppointment.date)) {
+              parsedDate = parse(fullAppointment.date, "yyyy-MM-dd", new Date());
+            } else {
+              parsedDate = new Date(fullAppointment.date);
+            }
+            
+            if (parsedDate && !isNaN(parsedDate.getTime())) {
+              setDate(parsedDate);
+            } else {
+              setDate(undefined);
+            }
+          } catch {
+            setDate(undefined);
+          }
+          setLoading(false);
+        })
+        .catch((error) => {
+          const message = error instanceof Error ? error.message : "Failed to load appointment details";
+          toast({
+            title: "Error",
+            description: message,
+            variant: "destructive",
+          });
+          setLoading(false);
+        });
     }
-  }, [appointment]);
+  }, [open, appointment?.id, toast]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!appointment) return;
 
-    const updatedAppointment: Appointment = {
-      ...appointment,
-      ...formData,
-      date: date ? format(date, "MMM d, yyyy") : appointment.date,
-    };
+    // Extract service description from composite key (serviceId:description)
+    const serviceDescription = formData.service.includes(':') 
+      ? formData.service.split(':')[1] 
+      : formData.service;
 
-    console.log("Updated appointment:", updatedAppointment);
+    // Convert time from 12-hour to 24-hour format for API
+    const time24Hour = convertTo24Hour(formData.time);
     
-    if (onSave) {
-      onSave(updatedAppointment);
-    }
+    // Convert date to YYYY-MM-DD format for API
+    const dateStr = date ? format(date, "yyyy-MM-dd") : appointment.date;
 
-    toast({
-      title: "Appointment Updated",
-      description: `Appointment for ${formData.customerName} has been updated.`,
-    });
+    // Call backend API to update appointment
+    updateAdminAppointment(Number(appointment.id), {
+      customer_name: formData.customerName,
+      customer_email: formData.customerEmail,
+      customer_phone: formData.customerPhone,
+      staff_name: formData.staff,
+      service_id: serviceId,
+      service_description: serviceDescription,
+      date: dateStr,
+      time: time24Hour,
+      status: formData.status as any,
+      notes: formData.notes,
+    })
+      .then((updated) => {
+        toast({
+          title: "Appointment Updated",
+          description: `Appointment for ${formData.customerName} has been updated.`,
+        });
+        
+        // Call onSave callback if provided
+        if (onSave) {
+          const updatedAppointment: Appointment = {
+            ...appointment,
+            ...formData,
+            date: dateStr,
+            time: convertTo12Hour(time24Hour),
+          };
+          onSave(updatedAppointment);
+        }
 
-    onOpenChange(false);
+        onOpenChange(false);
+      })
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : "Failed to update appointment";
+        toast({
+          title: "Error",
+          description: message,
+          variant: "destructive",
+        });
+      });
   };
 
   if (!appointment) return null;
@@ -156,6 +313,11 @@ export function EditAppointmentDialog({
           </DialogDescription>
         </DialogHeader>
 
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <p className="text-muted-foreground">Loading appointment details...</p>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Customer Information */}
           <div className="space-y-4">
@@ -201,21 +363,38 @@ export function EditAppointmentDialog({
             <h3 className="text-lg font-semibold font-playfair">Appointment Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="service">Service *</Label>
+                <Label htmlFor="service">Service Description *</Label>
                 <Select
                   value={formData.service}
-                  onValueChange={(value) => setFormData({ ...formData, service: value })}
+                  onValueChange={(value) => {
+                    // Extract serviceId from composite key
+                    const [newServiceId] = value.split(':');
+                    setServiceId(parseInt(newServiceId, 10));
+                    setFormData({ ...formData, service: value });
+                  }}
                   required
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a service" />
                   </SelectTrigger>
                   <SelectContent>
-                    {services.map((service) => (
-                      <SelectItem key={service.name} value={service.name}>
-                        {service.name} ({service.duration})
+                    {mockServiceOptions.flatMap((service) =>
+                      service.descriptions.map((desc) => {
+                        const compositeKey = `${service.id}:${desc}`;
+                        return (
+                          <SelectItem key={compositeKey} value={compositeKey}>
+                            {service.name} - {desc}
+                          </SelectItem>
+                        );
+                      })
+                    )}
+                    {formData.service && !mockServiceOptions.some(s => 
+                      s.descriptions.some(d => `${s.id}:${d}` === formData.service)
+                    ) && (
+                      <SelectItem value={formData.service}>
+                        {formData.service.includes(':') ? formData.service.split(':')[1] : formData.service}
                       </SelectItem>
-                    ))}
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -227,7 +406,7 @@ export function EditAppointmentDialog({
                   onValueChange={(value) => setFormData({ ...formData, staff: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Auto-assign or select" />
+                    <SelectValue placeholder="No Preference" />
                   </SelectTrigger>
                   <SelectContent>
                     {staff.map((member) => (
@@ -235,6 +414,11 @@ export function EditAppointmentDialog({
                         {member.name}
                       </SelectItem>
                     ))}
+                    {formData.staff && !staff.some(s => s.name === formData.staff) && (
+                      <SelectItem value={formData.staff}>
+                        {formData.staff}
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -279,10 +463,15 @@ export function EditAppointmentDialog({
                   </SelectTrigger>
                   <SelectContent>
                     {timeSlots.map((slot) => (
-                      <SelectItem key={slot} value={slot}>
-                        {slot}
+                      <SelectItem key={slot} value={convertTo12Hour(slot)}>
+                        {convertTo12Hour(slot)}
                       </SelectItem>
                     ))}
+                    {formData.time && !timeSlots.some(s => convertTo12Hour(s) === formData.time) && (
+                      <SelectItem value={formData.time}>
+                        {formData.time}
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -325,9 +514,10 @@ export function EditAppointmentDialog({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">Save Changes</Button>
+            <Button type="submit" disabled={loading}>Save Changes</Button>
           </div>
         </form>
+        )}
       </DialogContent>
     </Dialog>
   );

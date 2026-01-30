@@ -502,6 +502,10 @@ export function AppointmentList({ searchQuery, appointments, loading, error, onC
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
         customer={selectedCustomer}
+        onEdit={(customer) => {
+          setEditAppointment(customer as Appointment);
+          setEditOpen(true);
+        }}
       />
 
       {/* Edit Appointment Dialog */}

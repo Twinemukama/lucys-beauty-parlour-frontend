@@ -11,6 +11,7 @@ import { AppointmentList } from "@/components/admin/AppointmentList";
 import { BookingDialog } from "@/components/BookingDialog";
 import { AddPortfolioDialog } from "@/components/admin/AddPortfolioDialog";
 import { CustomerDetailsDialog } from "@/components/admin/CustomerDetailsDialog";
+import { EditAppointmentDialog, type Appointment } from "@/components/admin/EditAppointmentDialog";
 import { ChangePasswordDialog } from "@/components/admin/ChangePasswordDialog";
 import { MenuItemsManager } from "@/components/admin/MenuItemsManager";
 import { clearAdminAccessToken, getAdminAccessToken, listAdminAppointments, type AppointmentDto } from "@/apis/bookings";
@@ -60,7 +61,8 @@ const AdminDashboard = () => {
 	const [appointments, setAppointments] = useState<AppointmentDto[]>([]);
 	const [appointmentsLoading, setAppointmentsLoading] = useState(false);
 	const [appointmentsError, setAppointmentsError] = useState<string | null>(null);
-
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editAppointment, setEditAppointment] = useState<Appointment | null>(null);
   const handleViewCalendarAppointment = (appointment: CalendarAppointment) => {
     // Format date as YYYY-MM-DD from local date (avoid UTC conversion)
     const year = appointment.date.getFullYear();
@@ -158,6 +160,29 @@ const AdminDashboard = () => {
 
   const handleAppointmentDeleted = () => {
     refreshAppointments();
+  };
+
+  const handleEditAppointment = (customer: CustomerDetails | any) => {
+    // Convert CustomerDetails/Customer to Appointment type for edit dialog
+    const appointment: Appointment = {
+      id: customer.id,
+      customerName: customer.customerName,
+      customerEmail: customer.customerEmail,
+      customerPhone: customer.customerPhone,
+      date: customer.date,
+      time: customer.time,
+      service: customer.service,
+      staff: customer.staff,
+      status: customer.status,
+      notes: customer.notes || "",
+    };
+    setEditAppointment(appointment);
+    setEditDialogOpen(true);
+  };
+
+  const handleEditDialogClose = () => {
+    setEditDialogOpen(false);
+    setEditAppointment(null);
   };
 
   const handleBookingDialogClose = (open: boolean) => {
@@ -382,7 +407,21 @@ const AdminDashboard = () => {
         onConfirm={handleAppointmentConfirmed}
         onCancel={handleAppointmentCancelled}
         onDelete={handleAppointmentDeleted}
+        onEdit={handleEditAppointment}
       />
+
+      {/* Edit Appointment Dialog */}
+      {editAppointment && (
+        <EditAppointmentDialog
+          open={editDialogOpen}
+          onOpenChange={handleEditDialogClose}
+          appointment={editAppointment}
+          onSave={() => {
+            handleEditDialogClose();
+            refreshAppointments();
+          }}
+        />
+      )}
 
       {/* Change Password Dialog */}
       <ChangePasswordDialog 
