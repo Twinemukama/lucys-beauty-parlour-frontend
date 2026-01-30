@@ -71,8 +71,6 @@ export function AddAppointmentDialog({ open, onOpenChange, defaultDate }: AddApp
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("New appointment:", { ...formData, date });
-    // Reset form and close dialog
     setFormData({
       customerName: "",
       customerEmail: "",

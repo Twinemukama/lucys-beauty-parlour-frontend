@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,9 +10,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, Mail, Phone, User, FileText, Briefcase, CheckCircle, XCircle, Trash2 } from "lucide-react";
+import { Calendar, Clock, Mail, Phone, User, FileText, Briefcase, CheckCircle, XCircle, Trash2, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { updateAdminAppointment, cancelAdminAppointment, deleteAdminAppointment } from "@/apis/bookings";
+import { updateAdminAppointment, cancelAdminAppointment, deleteAdminAppointment, getAdminAppointment, AppointmentDto } from "@/apis/bookings";
 
 interface Customer {
   id: string | number;
@@ -38,13 +38,39 @@ interface CustomerDetailsDialogProps {
   onConfirm?: (id: string | number) => void;
   onCancel?: (id: string | number) => void;
   onDelete?: (id: string | number) => void;
+  onEdit?: (customer: Customer) => void;
 }
 
-export function CustomerDetailsDialog({ open, onOpenChange, customer, onConfirm, onCancel, onDelete }: CustomerDetailsDialogProps) {
+export function CustomerDetailsDialog({ open, onOpenChange, customer, onConfirm, onCancel, onDelete, onEdit }: CustomerDetailsDialogProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [fullAppointment, setFullAppointment] = useState<AppointmentDto | null>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  
+  useEffect(() => {
+    if (open && customer) {
+      setLoadingDetails(true);
+      setFullAppointment(null); // Reset on open
+      getAdminAppointment(typeof customer.id === "string" ? parseInt(customer.id, 10) : customer.id)
+        .then((appointment) => {
+          setFullAppointment(appointment);
+          setLoadingDetails(false);
+        })
+        .catch((error) => {
+          const message = error instanceof Error ? error.message : "Failed to load appointment details";
+          toast({
+            title: "Error",
+            description: message,
+            variant: "destructive",
+          });
+          setLoadingDetails(false);
+        });
+    }
+  }, [open, customer?.id, toast]);
   
   if (!customer) return null;
+
+  const displayAppointment = fullAppointment || customer;
 
   const handleConfirm = async () => {
     if (!customer) return;
@@ -164,6 +190,11 @@ export function CustomerDetailsDialog({ open, onOpenChange, customer, onConfirm,
           </DialogDescription>
         </DialogHeader>
 
+        {loadingDetails ? (
+          <div className="flex items-center justify-center py-8">
+            <p className="text-muted-foreground">Loading appointment details...</p>
+          </div>
+        ) : (
         <div className="space-y-6">
           {/* Status Badge */}
           <div className="flex items-center justify-between">
@@ -229,32 +260,40 @@ export function CustomerDetailsDialog({ open, onOpenChange, customer, onConfirm,
                 <p className="text-sm text-muted-foreground">Service</p>
                 <div className="flex items-center gap-2">
                   <Briefcase className="h-4 w-4 text-muted-foreground" />
-                  <p className="font-medium">{customer.service}</p>
+                  <div>
+                    <p className="font-medium">
+                      {fullAppointment 
+                        ? (fullAppointment.service_name && fullAppointment.service_description
+                            ? `${fullAppointment.service_name} - ${fullAppointment.service_description}`
+                            : fullAppointment.service_description)
+                        : customer.service}
+                    </p>
+                  </div>
                 </div>
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Staff Member</p>
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4 text-muted-foreground" />
-                  <p className="font-medium">{customer.staff}</p>
+                  <p className="font-medium">{fullAppointment?.staff_name || customer.staff}</p>
                 </div>
               </div>
-              {customer.price_cents !== undefined && customer.price_cents !== null && (
+              {(fullAppointment?.price_cents !== undefined || customer.price_cents !== undefined) && (
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Price</p>
                   <p className="font-medium text-primary">
                     {new Intl.NumberFormat("en-UG", {
                       style: "currency",
-                      currency: customer.currency || "UGX",
+                      currency: fullAppointment?.currency || customer.currency || "UGX",
                       minimumFractionDigits: 0,
-                    }).format(customer.price_cents)}
+                    }).format(fullAppointment?.price_cents || customer.price_cents || 0)}
                   </p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Notes */}
+        {/* Notes */}
           {customer.notes && (
             <>
               <Separator />
@@ -270,15 +309,30 @@ export function CustomerDetailsDialog({ open, onOpenChange, customer, onConfirm,
             </>
           )}
         </div>
+        )}
 
         {/* Action buttons */}
         <DialogFooter className="mt-6 gap-2 sm:gap-0 flex flex-col sm:flex-row justify-between">
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (customer && onEdit) {
+                onEdit(customer);
+                onOpenChange(false);
+              }
+            }}
+            disabled={isLoading || loadingDetails}
+            className="flex-1 sm:flex-initial"
+          >
+            <Edit className="mr-2 h-4 w-4" />
+            Edit
+          </Button>
           {customer.status === "pending" && (
             <div className="flex gap-2 w-full sm:w-auto">
               <Button 
                 variant="outline" 
                 onClick={handleCancel}
-                disabled={isLoading}
+                disabled={isLoading || loadingDetails}
                 className="text-destructive hover:text-destructive flex-1 sm:flex-initial"
               >
                 <XCircle className="mr-2 h-4 w-4" />
@@ -286,7 +340,7 @@ export function CustomerDetailsDialog({ open, onOpenChange, customer, onConfirm,
               </Button>
               <Button 
                 onClick={handleConfirm}
-                disabled={isLoading}
+                disabled={isLoading || loadingDetails}
                 className="flex-1 sm:flex-initial"
               >
                 <CheckCircle className="mr-2 h-4 w-4" />
@@ -298,7 +352,7 @@ export function CustomerDetailsDialog({ open, onOpenChange, customer, onConfirm,
             <Button 
               variant="ghost" 
               onClick={handleDelete}
-              disabled={isLoading}
+              disabled={isLoading || loadingDetails}
               className="text-destructive hover:text-destructive hover:bg-destructive/10"
             >
               <Trash2 className="mr-2 h-4 w-4" />
@@ -306,6 +360,7 @@ export function CustomerDetailsDialog({ open, onOpenChange, customer, onConfirm,
             </Button>
           )}
         </DialogFooter>
+        {}
       </DialogContent>
     </Dialog>
   );

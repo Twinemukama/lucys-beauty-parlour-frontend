@@ -105,7 +105,16 @@ export type AppointmentDto = {
 	customer_phone: string;
 	staff_name: string;
 	service_id: number;
+	service_name?: string;
 	service_description: string;
+	service_details?: {
+		id: number;
+		service: string;
+		name: string;
+		descriptions: string[];
+		images: string[];
+		rating: number;
+	};
 	date: string;
 	time: string;
 	status: AppointmentStatus;
