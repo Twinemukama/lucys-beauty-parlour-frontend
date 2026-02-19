@@ -18,7 +18,7 @@ const contactInfo = [
   {
     icon: Mail,
     title: "Email",
-    details: "hello@lucysbeauty.com",
+    details: "info@lucysbeautyparlour.com",
   },
   {
     icon: Clock,
