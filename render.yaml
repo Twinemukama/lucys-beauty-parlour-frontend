@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: lucy-beauty-frontend
+    env: node
+    plan: free
+    buildCommand: bun install && bun run build
+    startCommand: node server.js
+    envVars:
+      - key: VITE_API_URL
+        value: https://lucysbeautyparlour-backend.onrender.com
