@@ -14,7 +14,7 @@ import { CustomerDetailsDialog } from "@/components/admin/CustomerDetailsDialog"
 import { EditAppointmentDialog, type Appointment } from "@/components/admin/EditAppointmentDialog";
 import { ChangePasswordDialog } from "@/components/admin/ChangePasswordDialog";
 import { MenuItemsManager } from "@/components/admin/MenuItemsManager";
-import { clearAdminAccessToken, getAdminAccessToken, listAdminAppointments, type AppointmentDto } from "@/apis/bookings";
+import { clearAdminAccessToken, getAdminAccessToken, listAdminAppointments, updateAdminAppointment, type AppointmentDto } from "@/apis/bookings";
 
 interface CalendarAppointment {
   id: string;
@@ -111,6 +111,26 @@ const AdminDashboard = () => {
       .then((data) => {
         if (cancelled) return;
         setAppointments(data);
+
+        (async function markPastConfirmedAppointments(items: AppointmentDto[]) {
+          try {
+            const todayStr = new Date().toISOString().split("T")[0];
+            const toComplete = items.filter(a => a && a.status === "confirmed" && a.date < todayStr);
+            if (toComplete.length === 0) return;
+
+            await Promise.all(toComplete.map(async (apt) => {
+              try {
+                await updateAdminAppointment(apt.id, { status: "completed" });
+              } catch (err) {
+              }
+            }));
+
+            const refreshed = await listAdminAppointments();
+            if (!cancelled) setAppointments(refreshed);
+          } catch {
+
+          }
+        })(data);
       })
       .catch((err: unknown) => {
         if (cancelled) return;
