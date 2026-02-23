@@ -462,7 +462,7 @@ export function PortfolioItemsManager() {
 					}
 				}
 			}}>
-				<DialogContent className="sm:max-w-lg">
+				<DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
 					<DialogHeader>
 						<DialogTitle className="font-playfair text-2xl">Edit Portfolio Item</DialogTitle>
 						<DialogDescription>

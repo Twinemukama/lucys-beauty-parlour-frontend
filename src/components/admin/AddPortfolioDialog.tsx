@@ -182,7 +182,7 @@ export function AddPortfolioDialog({ open, onOpenChange }: AddPortfolioDialogPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-playfair text-2xl">Add Portfolio Item</DialogTitle>
           <DialogDescription>
