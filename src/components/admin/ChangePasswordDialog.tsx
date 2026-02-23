@@ -169,11 +169,12 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
               variant="outline"
               onClick={() => handleOpenChange(false)}
               className="flex-1"
+              disabled={isLoading}
             >
               Cancel
             </Button>
-            <Button type="submit" className="flex-1" disabled={isLoading}>
-              {isLoading ? "Updating..." : "Update Password"}
+            <Button type="submit" className="flex-1" loading={isLoading}>
+              Update Password
             </Button>
           </div>
         </form>

@@ -558,6 +558,7 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService, isAdmin 
   const [capacityMessage, setCapacityMessage] = useState<string | null>(null);
   const [lastCapacityToastDate, setLastCapacityToastDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [customerInfo, setCustomerInfo] = useState({
     name: "",
     email: "",
@@ -763,6 +764,7 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService, isAdmin 
       selectedServiceOption.id
     );
 
+    setIsSubmitting(true);
     try {
       const status: AppointmentStatus = "pending";
       await createAppointment({
@@ -792,6 +794,8 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService, isAdmin 
         description: err?.message || "Unable to create appointment.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -1120,12 +1124,13 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService, isAdmin 
             </div>
 
             <div className="flex justify-between">
-              <Button variant="outline" onClick={handleBack}>
+              <Button variant="outline" onClick={handleBack} disabled={isSubmitting}>
                 Back
               </Button>
               <Button
                 onClick={handleSubmit}
-                disabled={!customerInfo.name || !customerInfo.email || !customerInfo.phone}
+                disabled={!customerInfo.name || !customerInfo.email || !customerInfo.phone || isSubmitting}
+                loading={isSubmitting}
               >
                 Confirm Booking
               </Button>

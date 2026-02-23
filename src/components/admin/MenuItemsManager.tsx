@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, MoreHorizontal, Edit, Trash } from "lucide-react";
+import { Plus, MoreHorizontal, Edit, Trash, Loader2 } from "lucide-react";
 
 import { listAllMenuItems, type MenuItemDto } from "@/apis/menuItems";
 import { createAdminMenuItem, deleteAdminMenuItem, updateAdminMenuItem } from "@/apis/adminMenuItems";
@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { SALON_SERVICE_CATEGORIES } from "@/lib/salonServiceCategories";
+import { normalizeText } from "@/lib/utils";
 
 function centsToDisplay(priceCents: number): string {
 	if (!Number.isFinite(priceCents)) return "";
@@ -117,6 +118,7 @@ export function MenuItemsManager() {
 			await qc.invalidateQueries({ queryKey: ["menu-items"] });
 			toast({ title: "Menu item created" });
 			setCreateOpen(false);
+			window.location.reload();
 		},
 		onError: (err: unknown) => {
 			toast({
@@ -136,6 +138,7 @@ export function MenuItemsManager() {
 			toast({ title: "Menu item updated" });
 			setEditOpen(false);
 			setEditItem(null);
+			window.location.reload();
 		},
 		onError: (err: unknown) => {
 			toast({
@@ -151,6 +154,7 @@ export function MenuItemsManager() {
 		onSuccess: async () => {
 			await qc.invalidateQueries({ queryKey: ["menu-items"] });
 			toast({ title: "Menu item deleted" });
+			window.location.reload();
 		},
 		onError: (err: unknown) => {
 			toast({
@@ -233,11 +237,13 @@ export function MenuItemsManager() {
 													</AlertDialogDescription>
 												</AlertDialogHeader>
 												<AlertDialogFooter>
-													<AlertDialogCancel>Cancel</AlertDialogCancel>
+													<AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
 													<AlertDialogAction
 														onClick={() => deleteMutation.mutate(it.id)}
 														disabled={deleteMutation.isPending}
+														className="gap-2"
 													>
+														{deleteMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
 														Delete
 													</AlertDialogAction>
 												</AlertDialogFooter>
@@ -262,6 +268,7 @@ export function MenuItemsManager() {
 				mode="create"
 				open={createOpen}
 				onOpenChange={setCreateOpen}
+				isLoading={createMutation.isPending}
 				onSubmit={(state) => {
 					const priceCents = parsePriceToCents(state.price);
 					const duration = Number(state.durationMinutes);
@@ -275,7 +282,7 @@ export function MenuItemsManager() {
 					}
 					createMutation.mutate({
 						category: state.category.trim(),
-						name: state.name.trim(),
+						name: normalizeText(state.name),
 						currency: state.currency.trim(),
 						price_cents: priceCents,
 						duration_minutes: Math.trunc(duration),
@@ -291,6 +298,7 @@ export function MenuItemsManager() {
 					if (!open) setEditItem(null);
 				}}
 				item={editItem}
+				isLoading={updateMutation.isPending}
 				onSubmit={(state) => {
 					if (!editItem) return;
 					const priceCents = parsePriceToCents(state.price);
@@ -307,7 +315,7 @@ export function MenuItemsManager() {
 						id: editItem.id,
 						input: {
 							category: state.category.trim(),
-							name: state.name.trim(),
+							name: normalizeText(state.name),
 							currency: state.currency.trim(),
 							price_cents: priceCents,
 							duration_minutes: Math.trunc(duration),
@@ -324,9 +332,10 @@ function MenuItemDialog(props: {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	item?: MenuItemDto | null;
+	isLoading?: boolean;
 	onSubmit: (state: MenuItemFormState) => void;
 }) {
-	const { mode, open, onOpenChange, item, onSubmit } = props;
+	const { mode, open, onOpenChange, item, isLoading = false, onSubmit } = props;
 	const [state, setState] = useState<MenuItemFormState>(() => toFormState(item));
 
 	// Reset when opening or changing item
@@ -368,6 +377,7 @@ function MenuItemDialog(props: {
 						<Select
 							value={state.category}
 							onValueChange={(value) => setState((s) => ({ ...s, category: value }))}
+							disabled={isLoading}
 						>
 							<SelectTrigger id="menu-category">
 								<SelectValue placeholder="Select a service category" />
@@ -390,6 +400,7 @@ function MenuItemDialog(props: {
 							onChange={(e) => setState((s) => ({ ...s, name: e.target.value }))}
 							placeholder="Box Braids"
 							required
+							disabled={isLoading}
 						/>
 					</div>
 
@@ -401,6 +412,7 @@ function MenuItemDialog(props: {
 								value={state.currency}
 								onChange={(e) => setState((s) => ({ ...s, currency: e.target.value }))}
 								placeholder="UGX"
+								disabled={isLoading}
 							/>
 						</div>
 
@@ -415,6 +427,7 @@ function MenuItemDialog(props: {
 								onChange={(e) => setState((s) => ({ ...s, price: e.target.value }))}
 								placeholder="0.00"
 								required
+								disabled={isLoading}
 							/>
 						</div>
 					</div>
@@ -429,14 +442,15 @@ function MenuItemDialog(props: {
 							onChange={(e) => setState((s) => ({ ...s, durationMinutes: e.target.value }))}
 							placeholder="60"
 							required
+							disabled={isLoading}
 						/>
 					</div>
 
 					<div className="flex justify-end gap-3 pt-2">
-						<Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+						<Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
 							Cancel
 						</Button>
-						<Button type="submit">{submitText}</Button>
+						<Button type="submit" loading={isLoading}>{submitText}</Button>
 					</div>
 				</form>
 			</DialogContent>

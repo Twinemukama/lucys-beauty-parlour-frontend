@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/command";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
+import { cn, normalizeText } from "@/lib/utils";
 import { createAdminServiceItem } from "@/apis/adminServiceItems";
 import type { ServiceCategory } from "@/apis/serviceItems";
 
@@ -114,7 +114,7 @@ export function AddPortfolioDialog({ open, onOpenChange }: AddPortfolioDialogPro
 		try {
 			await createAdminServiceItem({
 				service: formData.category as ServiceCategory,
-				name: formData.style.trim(),
+				name: normalizeText(formData.style),
 				descriptions: [formData.description.trim()],
 				images: [imagePreview],
 			});
@@ -126,6 +126,7 @@ export function AddPortfolioDialog({ open, onOpenChange }: AddPortfolioDialogPro
 
 			handleReset();
 			onOpenChange(false);
+			window.location.reload();
 		} catch (err: unknown) {
 			const message = err instanceof Error ? err.message : "Failed to add portfolio item";
 			toast({
@@ -150,10 +151,10 @@ export function AddPortfolioDialog({ open, onOpenChange }: AddPortfolioDialogPro
   const handleAddNewStyle = () => {
     if (!newStyleInput.trim() || !formData.category) return;
     
-    const trimmedStyle = newStyleInput.trim();
+    const normalizedStyle = normalizeText(newStyleInput);
     
     // Check if style already exists
-    if (availableStyles.some(s => s.toLowerCase() === trimmedStyle.toLowerCase())) {
+    if (availableStyles.some(s => s.toLowerCase() === normalizedStyle.toLowerCase())) {
       toast({
         title: "Style exists",
         description: "This style already exists in the list.",
@@ -164,16 +165,16 @@ export function AddPortfolioDialog({ open, onOpenChange }: AddPortfolioDialogPro
 
     setCustomStyles(prev => ({
       ...prev,
-      [formData.category]: [...(prev[formData.category] || []), trimmedStyle],
+      [formData.category]: [...(prev[formData.category] || []), normalizedStyle],
     }));
     
-    setFormData(prev => ({ ...prev, style: trimmedStyle }));
+    setFormData(prev => ({ ...prev, style: normalizedStyle }));
     setNewStyleInput("");
     setStylePopoverOpen(false);
     
     toast({
       title: "Style added",
-      description: `"${trimmedStyle}" has been added and selected.`,
+      description: `"${normalizedStyle}" has been added and selected.`,
     });
   };
 
@@ -198,6 +199,7 @@ export function AddPortfolioDialog({ open, onOpenChange }: AddPortfolioDialogPro
             <Select
               value={formData.category}
               onValueChange={(value) => setFormData(prev => ({ ...prev, category: value, style: "" }))}
+              disabled={isSubmitting}
             >
               <SelectTrigger id="category" className="w-full">
                 <SelectValue placeholder="Select a service category" />
@@ -359,16 +361,17 @@ export function AddPortfolioDialog({ open, onOpenChange }: AddPortfolioDialogPro
           onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
           placeholder="Short description shown in the gallery"
           rows={3}
+          disabled={isSubmitting}
         />
       </div>
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button type="button" variant="outline" onClick={handleReset}>
+            <Button type="button" variant="outline" onClick={handleReset} disabled={isSubmitting}>
               Reset
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Adding..." : "Add to Portfolio"}
+            <Button type="submit" loading={isSubmitting}>
+              Add to Portfolio
             </Button>
           </div>
         </form>

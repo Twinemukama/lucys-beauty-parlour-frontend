@@ -34,3 +34,41 @@ export const getServiceDisplayName = (serviceId: number, variant: string): strin
   const baseName = serviceNameMap[serviceId] || "Service";
   return `${baseName}${variant ? ` (${variant})` : ""}`;
 };
+
+export function normalizeText(text: string): string {
+  const trimmed = text.trim();
+  
+  // Handle text with brackets: "box braids (short, small)" → "Box Braids(Short, Small)"
+  const bracketMatch = trimmed.match(/^(.+?)\s*\((.+)\)$/);
+  if (bracketMatch) {
+    const beforeBracket = bracketMatch[1];
+    const insideBracket = bracketMatch[2];
+    
+    // Normalize text before bracket
+    const normalizedBefore = beforeBracket
+      .split(/\s+/)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+    
+    // Normalize text inside bracket: capitalize first character, keep the rest
+    const normalizedInside = insideBracket
+      .split(/(\s*,\s*)/)
+      .map((part) => {
+        if (part.match(/^\s*,\s*$/)) return part; // Keep commas and spaces as-is
+        return part
+          .trim()
+          .split(/\s+/)
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(" ");
+      })
+      .join("");
+    
+    return `${normalizedBefore}(${normalizedInside})`;
+  }
+  
+  // Normal text without brackets
+  return trimmed
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}

@@ -97,6 +97,7 @@ export function CustomerDetailsDialog({ open, onOpenChange, customer, onConfirm,
         onConfirm(customer.id);
       }
       onOpenChange(false);
+      window.location.reload();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to confirm appointment";
       toast({
@@ -124,6 +125,7 @@ export function CustomerDetailsDialog({ open, onOpenChange, customer, onConfirm,
         onCancel(customer.id);
       }
       onOpenChange(false);
+      window.location.reload();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to cancel appointment";
       toast({
@@ -153,6 +155,7 @@ export function CustomerDetailsDialog({ open, onOpenChange, customer, onConfirm,
         onDelete(customer.id);
       }
       onOpenChange(false);
+      window.location.reload();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to delete appointment";
       toast({
@@ -182,7 +185,7 @@ export function CustomerDetailsDialog({ open, onOpenChange, customer, onConfirm,
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-playfair">Appointment Details</DialogTitle>
           <DialogDescription>
