@@ -14,6 +14,7 @@ import { CustomerDetailsDialog } from "@/components/admin/CustomerDetailsDialog"
 import { EditAppointmentDialog, type Appointment } from "@/components/admin/EditAppointmentDialog";
 import { ChangePasswordDialog } from "@/components/admin/ChangePasswordDialog";
 import { MenuItemsManager } from "@/components/admin/MenuItemsManager";
+import { PortfolioItemsManager } from "@/components/admin/PortfolioItemsManager";
 import { clearAdminAccessToken, getAdminAccessToken, listAdminAppointments, updateAdminAppointment, type AppointmentDto } from "@/apis/bookings";
 
 interface CalendarAppointment {
@@ -353,10 +354,11 @@ const AdminDashboard = () => {
 
         {/* Main Content - Tabs */}
         <Tabs defaultValue="calendar" className="space-y-6">
-          <TabsList className="grid h-auto w-full grid-cols-1 gap-1 sm:max-w-2xl sm:grid-cols-3">
+          <TabsList className="grid h-auto w-full grid-cols-1 gap-1 sm:max-w-3xl sm:grid-cols-4">
             <TabsTrigger value="calendar" className="w-full justify-start sm:justify-center">Calendar View</TabsTrigger>
             <TabsTrigger value="list" className="w-full justify-start sm:justify-center">List View</TabsTrigger>
             <TabsTrigger value="menu" className="w-full justify-start sm:justify-center">Menu Items</TabsTrigger>
+            <TabsTrigger value="portfolio" className="w-full justify-start sm:justify-center">Portfolio</TabsTrigger>
           </TabsList>
 
           <TabsContent value="calendar" className="space-y-6">
@@ -403,6 +405,18 @@ const AdminDashboard = () => {
               </CardHeader>
               <CardContent>
                 <MenuItemsManager />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="portfolio" className="space-y-6">
+            <Card className="shadow-elegant">
+              <CardHeader>
+                <CardTitle className="font-playfair">Portfolio Gallery</CardTitle>
+                <CardDescription>View and manage portfolio items shown in the services gallery</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PortfolioItemsManager />
               </CardContent>
             </Card>
           </TabsContent>
