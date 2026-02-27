@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { BookingDialog } from "@/components/BookingDialog";
-import { listServiceItems, resolveServiceItemImageUrl, type ServiceCategory, type ServiceItemDto } from "@/apis/serviceItems";
+import { listPortfolioItems, resolvePortfolioItemImageUrl, type ServiceCategory, type PortfolioItemDto } from "@/apis/portfolioItems";
 
 const categories = [
   { id: "hair", label: "Hair", fullLabel: "Hair Styling & Braiding", icon: Scissors },
@@ -32,7 +32,7 @@ export default function ServicesGallery() {
   const [selectedImage, setSelectedImage] = useState<{ title: string; image: string; description: string } | null>(null);
   const [activeTab, setActiveTab] = useState("hair");
   const [bookingOpen, setBookingOpen] = useState(false);
-  const [items, setItems] = useState<ServiceItemDto[]>([]);
+  const [items, setItems] = useState<PortfolioItemDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,7 +42,7 @@ export default function ServicesGallery() {
 
     setLoading(true);
     setError(null);
-    listServiceItems({ category: activeTab as ServiceCategory, limit: 100, offset: 0, signal: controller.signal })
+    listPortfolioItems({ category: activeTab as ServiceCategory, limit: 100, offset: 0, signal: controller.signal })
       .then((res) => {
         if (cancelled) return;
         setItems(res?.data || []);
@@ -67,9 +67,9 @@ export default function ServicesGallery() {
   const cards: GalleryCard[] = useMemo(() => {
     return (items || []).map((it) => ({
       id: it.id,
-      title: it.name,
-      description: (it.descriptions && it.descriptions.length > 0 ? it.descriptions[0] : "").trim(),
-      image: resolveServiceItemImageUrl(it.images?.[0] || ""),
+      title: it.style,
+      description: (it.description || "").trim(),
+      image: resolvePortfolioItemImageUrl(it.images?.[0] || ""),
     }));
   }, [items]);
 

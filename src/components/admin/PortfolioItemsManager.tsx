@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { MoreHorizontal, Trash, Loader2, Scissors, Heart, Sparkles, Image as ImageIcon, Edit, Upload } from "lucide-react";
 
-import { listServiceItems, type ServiceItemDto, resolveServiceItemImageUrl, type ServiceCategory } from "@/apis/serviceItems";
-import { deleteAdminServiceItem, updateAdminServiceItem } from "@/apis/adminServiceItems";
+import { listPortfolioItems, type PortfolioItemDto, resolvePortfolioItemImageUrl, type ServiceCategory } from "@/apis/portfolioItems";
+import { deleteAdminPortfolioItem, updateAdminPortfolioItem } from "@/apis/adminPortfolioItems";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -69,12 +69,12 @@ const categoryLabels = {
 export function PortfolioItemsManager() {
 	const { toast } = useToast();
 	const fileInputRef = useRef<HTMLInputElement>(null);
-	const [items, setItems] = useState<ServiceItemDto[]>([]);
+	const [items, setItems] = useState<PortfolioItemDto[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [deletingId, setDeletingId] = useState<number | null>(null);
-	const [previewItem, setPreviewItem] = useState<ServiceItemDto | null>(null);
-	const [editItem, setEditItem] = useState<ServiceItemDto | null>(null);
+	const [previewItem, setPreviewItem] = useState<PortfolioItemDto | null>(null);
+	const [editItem, setEditItem] = useState<PortfolioItemDto | null>(null);
 	const [editDialogOpen, setEditDialogOpen] = useState(false);
 	const [editFormData, setEditFormData] = useState({
 		category: "",
@@ -89,11 +89,11 @@ export function PortfolioItemsManager() {
 		setLoading(true);
 		setError(null);
 		try {
-			const allItems: ServiceItemDto[] = [];
+			const allItems: PortfolioItemDto[] = [];
 			const categories = ["hair", "makeup", "nails"] as const;
 			
 			for (const category of categories) {
-				const res = await listServiceItems({ category, limit: 100, offset: 0 });
+				const res = await listPortfolioItems({ category, limit: 100, offset: 0 });
 				allItems.push(...(res?.data || []));
 			}
 
@@ -118,9 +118,9 @@ export function PortfolioItemsManager() {
 	const sortedItems = useMemo(() => {
 		const list = [...items];
 		list.sort((a, b) => {
-			const c = (a.service || "").localeCompare(b.service || "");
+			const c = (a.category || "").localeCompare(b.category || "");
 			if (c !== 0) return c;
-			return (a.name || "").localeCompare(b.name || "");
+			return (a.style || "").localeCompare(b.style || "");
 		});
 		return list;
 	}, [items]);
@@ -128,7 +128,7 @@ export function PortfolioItemsManager() {
 	const handleDelete = async (id: number) => {
 		setDeletingId(id);
 		try {
-			await deleteAdminServiceItem(id);
+			await deleteAdminPortfolioItem(id);
 			toast({ title: "Portfolio item deleted" });
 			await loadItems();
 		} catch (err: unknown) {
@@ -151,7 +151,7 @@ export function PortfolioItemsManager() {
 
 		for (const item of items) {
 			try {
-				await deleteAdminServiceItem(item.id);
+				await deleteAdminPortfolioItem(item.id);
 				successCount++;
 			} catch {
 				failCount++;
@@ -174,15 +174,15 @@ export function PortfolioItemsManager() {
 		await loadItems();
 	};
 
-	const handleEdit = (item: ServiceItemDto) => {
+	const handleEdit = (item: PortfolioItemDto) => {
 		setEditItem(item);
 		setEditFormData({
-			category: item.service,
-			name: item.name,
-			description: item.descriptions?.[0] || "",
+			category: item.category,
+			name: item.style,
+			description: item.description || "",
 			imageFile: null,
 		});
-		setEditImagePreview(resolveServiceItemImageUrl(item.images?.[0] || ""));
+		setEditImagePreview(resolvePortfolioItemImageUrl(item.images?.[0] || ""));
 		setEditDialogOpen(true);
 	};
 
@@ -222,9 +222,9 @@ export function PortfolioItemsManager() {
 
 		try {
 			const updateData: any = {
-				service: editFormData.category as ServiceCategory,
-				name: normalizeText(editFormData.name),
-				descriptions: [editFormData.description.trim()],
+				category: editFormData.category as ServiceCategory,
+				style: normalizeText(editFormData.name),
+				description: editFormData.description.trim(),
 			};
 
 			// Only include images if a new file was uploaded
@@ -232,7 +232,7 @@ export function PortfolioItemsManager() {
 				updateData.images = [editImagePreview];
 			}
 
-			await updateAdminServiceItem(editItem.id, updateData);
+			await updateAdminPortfolioItem(editItem.id, updateData);
 
 			toast({
 				title: "Portfolio item updated",
@@ -324,8 +324,8 @@ export function PortfolioItemsManager() {
 					</TableHeader>
 					<TableBody>
 						{sortedItems.map((it) => {
-							const imageUrl = resolveServiceItemImageUrl(it.images?.[0] || "");
-							const description = it.descriptions?.[0] || "";
+							const imageUrl = resolvePortfolioItemImageUrl(it.images?.[0] || "");
+							const description = it.description || "";
 							return (
 								<TableRow key={it.id}>
 									<TableCell>
@@ -336,7 +336,7 @@ export function PortfolioItemsManager() {
 											{imageUrl ? (
 												<img
 													src={imageUrl}
-													alt={it.name}
+													alt={it.style}
 													className="h-full w-full object-cover"
 												/>
 											) : (
@@ -348,11 +348,11 @@ export function PortfolioItemsManager() {
 									</TableCell>
 									<TableCell>
 										<Badge variant="outline" className="gap-1.5">
-											{getCategoryIcon(it.service)}
-											{getCategoryLabel(it.service)}
+											{getCategoryIcon(it.category)}
+											{getCategoryLabel(it.category)}
 										</Badge>
 									</TableCell>
-									<TableCell className="font-medium">{it.name}</TableCell>
+									<TableCell className="font-medium">{it.style}</TableCell>
 									<TableCell className="max-w-md truncate text-sm text-muted-foreground">
 										{description}
 									</TableCell>
@@ -384,7 +384,7 @@ export function PortfolioItemsManager() {
 														<AlertDialogHeader>
 															<AlertDialogTitle>Delete portfolio item?</AlertDialogTitle>
 															<AlertDialogDescription>
-																This will permanently delete "{it.name}" from the gallery.
+																This will permanently delete "{it.style}" from the gallery.
 															</AlertDialogDescription>
 														</AlertDialogHeader>
 														<AlertDialogFooter>
@@ -423,27 +423,27 @@ export function PortfolioItemsManager() {
 			<Dialog open={!!previewItem} onOpenChange={(open) => !open && setPreviewItem(null)}>
 				<DialogContent className="sm:max-w-2xl">
 					<DialogHeader>
-						<DialogTitle className="font-playfair">{previewItem?.name}</DialogTitle>
+						<DialogTitle className="font-playfair">{previewItem?.style}</DialogTitle>
 					</DialogHeader>
 					{previewItem && (
 						<div className="space-y-4">
 							<AspectRatio ratio={4 / 5}>
 								<img
-									src={resolveServiceItemImageUrl(previewItem.images?.[0] || "")}
-									alt={previewItem.name}
+									src={resolvePortfolioItemImageUrl(previewItem.images?.[0] || "")}
+									alt={previewItem.style}
 									className="rounded-lg object-cover w-full h-full"
 								/>
 							</AspectRatio>
 							<div className="space-y-2">
 								<div className="flex items-center gap-2">
 									<Badge variant="outline" className="gap-1.5">
-										{getCategoryIcon(previewItem.service)}
-										{getCategoryLabel(previewItem.service)}
+										{getCategoryIcon(previewItem.category)}
+										{getCategoryLabel(previewItem.category)}
 									</Badge>
 								</div>
-								{previewItem.descriptions?.[0] && (
+								{previewItem.description && (
 									<p className="text-sm text-muted-foreground">
-										{previewItem.descriptions[0]}
+										{previewItem.description}
 									</p>
 								)}
 							</div>

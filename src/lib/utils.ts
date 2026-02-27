@@ -28,11 +28,14 @@ export const serviceNameMap: Record<number, string> = {
   19: "Gypsy Locs",
   20: "Sew-ins",
   21: "Fulani Passion Twists",
+  22: "Eyebrow Trimming",
 };
 
 export const getServiceDisplayName = (serviceId: number, variant: string): string => {
   const baseName = serviceNameMap[serviceId] || "Service";
-  return `${baseName}${variant ? ` (${variant})` : ""}`;
+  const trimmedVariant = (variant || "").trim();
+  if (!trimmedVariant || trimmedVariant.toLowerCase() === "none") return baseName;
+  return `${baseName} (${trimmedVariant})`;
 };
 
 export function normalizeText(text: string): string {

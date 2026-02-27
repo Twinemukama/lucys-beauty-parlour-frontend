@@ -33,8 +33,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { cn, normalizeText } from "@/lib/utils";
-import { createAdminServiceItem } from "@/apis/adminServiceItems";
-import type { ServiceCategory } from "@/apis/serviceItems";
+import { createAdminPortfolioItem } from "@/apis/adminPortfolioItems";
+import type { ServiceCategory } from "@/apis/portfolioItems";
 
 interface AddPortfolioDialogProps {
   open: boolean;
@@ -112,10 +112,10 @@ export function AddPortfolioDialog({ open, onOpenChange }: AddPortfolioDialogPro
     setIsSubmitting(true);
 
 		try {
-			await createAdminServiceItem({
-				service: formData.category as ServiceCategory,
-				name: normalizeText(formData.style),
-				descriptions: [formData.description.trim()],
+			await createAdminPortfolioItem({
+        category: formData.category as ServiceCategory,
+        style: normalizeText(formData.style),
+        description: formData.description.trim(),
 				images: [imagePreview],
 			});
 

@@ -253,6 +253,14 @@ const mockServiceOptions: MockServiceOption[] = [
     descriptions: ["Day", "Evening"],
   },
   {
+    id: 22,
+    service: "Makeup",
+    name: "Eyebrow Trimming",
+    duration: "20-30 minutes",
+    basePrice: 5000, // UGX
+    descriptions: ["None"],
+  },
+  {
     id: 4,
     service: "Makeup",
     name: "Bridal Makeup",
@@ -705,7 +713,7 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService, isAdmin 
         return;
       }
       finalDescription = Object.values(selectedVariants).join("-");
-    } else {
+    } else if (selectedServiceOption.descriptions.length > 0) {
       // Use standard single description
       if (!selectedServiceDescription) {
         toast({
@@ -716,6 +724,8 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService, isAdmin 
         return;
       }
       finalDescription = selectedServiceDescription;
+    } else {
+      finalDescription = "";
     }
     
     if (!selectedDate || !selectedTime) {
@@ -836,7 +846,8 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService, isAdmin 
                       type="button"
                       onClick={() => {
                         setSelectedServiceOptionId(opt.id);
-                        setStep(1.5);
+                        const hasVariants = Boolean(opt.variantCategories) || (opt.descriptions && opt.descriptions.length > 0);
+                        setStep(hasVariants ? 1.5 : 2);
                       }}
                       className={cn(
                         "p-6 rounded-lg border-2 transition-smooth text-left relative",
@@ -1010,7 +1021,15 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService, isAdmin 
             </div>
 
             <div className="flex justify-between">
-              <Button variant="outline" onClick={() => setStep(1.5)}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const hasVariants =
+                    Boolean(selectedServiceOption?.variantCategories) ||
+                    (selectedServiceOption?.descriptions && selectedServiceOption.descriptions.length > 0);
+                  setStep(hasVariants ? 1.5 : 1);
+                }}
+              >
                 Back
               </Button>
               <Button onClick={handleNext} disabled={!selectedDate || dateCapacityLoading || dateAtCapacity}>
@@ -1155,11 +1174,14 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService, isAdmin 
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Service:</span>
                 <span className="font-medium">
-                  {selectedServiceOption?.name} ({
-                    selectedServiceOption?.variantCategories 
+                  {selectedServiceOption?.name}
+                  {(() => {
+                    const variantText = selectedServiceOption?.variantCategories
                       ? Object.values(selectedVariants).join(" • ")
-                      : selectedServiceDescription
-                  })
+                      : selectedServiceDescription;
+                    if (!variantText || variantText.toLowerCase() === "none") return null;
+                    return ` (${variantText})`;
+                  })()}
                 </span>
               </div>
               <div className="flex justify-between">
