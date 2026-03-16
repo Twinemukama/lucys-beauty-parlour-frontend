@@ -1009,7 +1009,7 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService, isAdmin 
                   disabled={(date) => {
                     const day = new Date(date);
                     day.setHours(0, 0, 0, 0);
-                    return day < startOfToday || day.getDay() === 0;
+                    return day < startOfToday;
                   }}
                   className="rounded-md border"
                 />

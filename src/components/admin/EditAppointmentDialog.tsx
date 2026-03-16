@@ -443,7 +443,6 @@ export function EditAppointmentDialog({
                       mode="single"
                       selected={date}
                       onSelect={setDate}
-                      disabled={(date) => date.getDay() === 0}
                       initialFocus
                       className="pointer-events-auto"
                     />

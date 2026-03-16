@@ -197,9 +197,7 @@ export function AddAppointmentDialog({ open, onOpenChange, defaultDate }: AddApp
                       mode="single"
                       selected={date}
                       onSelect={setDate}
-                      disabled={(date) =>
-                        date < new Date() || date.getDay() === 0
-                      }
+                      disabled={(date) => date < new Date()}
                       initialFocus
                       className="pointer-events-auto"
                     />
