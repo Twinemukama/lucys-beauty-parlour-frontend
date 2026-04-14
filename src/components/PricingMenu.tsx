@@ -145,7 +145,7 @@ export const PricingMenu = () => {
         </div>
 
         <p className="text-center mt-12 font-inter text-sm text-muted-foreground">
-          * Prices may vary based on hair length and complexity. Contact us for a personalized quote.
+          * Prices may vary based on hair length and complexity. Book an appointment with us for a personalized quote.
         </p>
       </div>
     </section>

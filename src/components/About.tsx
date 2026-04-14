@@ -8,7 +8,7 @@ export const About = () => {
         <div className="space-y-6 font-inter text-lg text-muted-foreground leading-relaxed">
           <p>
             Founded with a passion for beauty and wellness, Lucy's Beauty Parlour has been
-            serving our community with dedication and expertise for over a decade.
+            serving our community with dedication and expertise for over {new Date().getFullYear() - 2022} years.
           </p>
           <p>
             Our team of highly trained professionals combines artistry with the latest
