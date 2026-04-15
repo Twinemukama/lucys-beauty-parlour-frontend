@@ -34,7 +34,9 @@ import { updateAdminAppointment, cancelAdminAppointment, deleteAdminAppointment 
 import { getServiceDisplayName } from "@/lib/utils";
 
 interface AppointmentListProps {
-  searchQuery: string;
+  searchQuery?: string;
+  customerQuery?: string;
+  serviceQuery?: string;
   appointments?: AppointmentDto[];
   loading?: boolean;
   error?: string | null;
@@ -71,7 +73,6 @@ function toDisplayTime(value: string): string {
 }
 
 function timeToMinutes(displayTime: string): number {
-  // Convert 12-hour format (e.g., "09:00 AM") back to minutes since midnight
   const match = /^(\d{1,2}):(\d{2})\s(AM|PM)$/.exec(displayTime.trim());
   if (!match) return 0;
   
@@ -226,27 +227,43 @@ export function AppointmentList({ searchQuery, appointments, loading, error, onC
     setEditOpen(true);
   };
 
+  const q = (searchQuery ?? "").toLowerCase().trim();
+
   const filteredAppointments = rows.filter((appointment) => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      appointment.customerName.toLowerCase().includes(query) ||
-      appointment.customerEmail.toLowerCase().includes(query) ||
-      appointment.customerPhone.includes(query) ||
-      appointment.service.toLowerCase().includes(query)
-    );
+    if (!q) return true;
+    const matchesCustomer =
+      appointment.customerName.toLowerCase().includes(q) ||
+      appointment.customerEmail.toLowerCase().includes(q) ||
+      appointment.customerPhone.includes(q);
+  const serviceDisplay = getServiceDisplayName(appointment.service_id, appointment.service).toLowerCase();
+  const matchesService = appointment.service.toLowerCase().includes(q) || serviceDisplay.includes(q);
+    return matchesCustomer || matchesService;
   });
 
-  // Sort by date and time, most upcoming first (earliest appointments first)
   const sortedAppointments = [...filteredAppointments].sort((a, b) => {
-    // First compare by date
-    if (a.date !== b.date) {
-      return a.date.localeCompare(b.date);
+    const rank = (status: string) => {
+      if (status === "confirmed" || status === "pending") return 0;
+      if (status === "completed") return 1;
+      return 2;
+    };
+
+    const rankA = rank(a.status);
+    const rankB = rank(b.status);
+
+    if (rankA !== rankB) return rankA - rankB;
+
+    const compareDateTime = () => {
+      if (a.date !== b.date) return a.date.localeCompare(b.date);
+      const timeAMinutes = timeToMinutes(a.time);
+      const timeBMinutes = timeToMinutes(b.time);
+      return timeAMinutes - timeBMinutes;
+    };
+
+    const cmp = compareDateTime();
+    if (rankA === 1) {
+      return -cmp;
     }
-    // If same date, compare by time
-    const timeAMinutes = timeToMinutes(a.time);
-    const timeBMinutes = timeToMinutes(b.time);
-    return timeAMinutes - timeBMinutes;
+    return cmp;
   });
 
   const handleConfirm = async (appointment: AppointmentRow) => {

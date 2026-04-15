@@ -335,19 +335,17 @@ const AdminDashboard = () => {
         <Card className="mb-6 shadow-soft">
           <CardContent className="pt-6">
             <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by customer name, email, or phone..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by customer or service name, email, or phone..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
               </div>
-              <Button variant="outline" className="gap-2">
-                <Filter className="h-4 w-4" />
-                Filters
-              </Button>
             </div>
           </CardContent>
         </Card>
@@ -387,12 +385,12 @@ const AdminDashboard = () => {
                 <CardDescription>Manage and update appointment details</CardDescription>
               </CardHeader>
               <CardContent>
-				<AppointmentList 
-					searchQuery={searchQuery}
-					appointments={appointments}
-					loading={appointmentsLoading}
-					error={appointmentsError}
-				/>
+        <AppointmentList 
+          searchQuery={searchQuery}
+          appointments={appointments}
+          loading={appointmentsLoading}
+          error={appointmentsError}
+        />
               </CardContent>
             </Card>
           </TabsContent>
