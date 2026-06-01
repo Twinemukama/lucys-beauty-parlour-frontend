@@ -475,9 +475,9 @@ const staff = [
   { id: "any", name: "No Preference" },
   { id: "lucy", name: "Lucy" },
   { id: "lonnet", name: "Lonnet" },
-  { id: "spe", name: "Spe" },
+  { id: "spe", name: "Shannitah" },
   { id: "truth", name: "Truth" },
-  { id: "jim", name: "Jim" },
+  { id: "jim", name: "Annitah" },
   { id: "destiny", name: "Destiny" },
   { id: "joan", name: "Joan" },
   { id: "gift", name: "Gift" },
@@ -550,6 +550,27 @@ const formatPrice = (price: number): string => {
     currency: "UGX",
     minimumFractionDigits: 0,
   }).format(price);
+};
+
+// Validation helpers
+const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+const isValidName = (name: string): boolean => {
+  const trimmed = name.trim();
+  if (trimmed.length < 2) return false;
+  if (/^(.)\1+$/.test(trimmed)) return false;
+  if (!/[a-zA-Z]/.test(trimmed)) return false;
+  return true;
+};
+
+const isValidPhone = (phone: string): boolean => {
+  const trimmed = phone.trim();
+  // Accept phone numbers with digits, +, -, (), and spaces; must have at least 7 digits
+  const digitsOnly = trimmed.replace(/\D/g, "");
+  return digitsOnly.length >= 7;
 };
 
 export const BookingDialog = ({ open, onOpenChange, preSelectedService, isAdmin = false }: BookingDialogProps) => {
@@ -1093,7 +1114,13 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService, isAdmin 
                   value={customerInfo.name}
                   onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
                   placeholder="Enter your full name"
+                  className={customerInfo.name && !isValidName(customerInfo.name) ? "border-destructive" : ""}
                 />
+                {customerInfo.name && !isValidName(customerInfo.name) && (
+                  <p className="text-xs text-destructive mt-1">
+                    Name must be at least 2 characters and contain letters (no repetitive characters)
+                  </p>
+                )}
               </div>
 
               <div>
@@ -1104,7 +1131,13 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService, isAdmin 
                   value={customerInfo.email}
                   onChange={(e) => setCustomerInfo({ ...customerInfo, email: e.target.value })}
                   placeholder="your.email@example.com"
+                  className={customerInfo.email && !isValidEmail(customerInfo.email) ? "border-destructive" : ""}
                 />
+                {customerInfo.email && !isValidEmail(customerInfo.email) && (
+                  <p className="text-xs text-destructive mt-1">
+                    Please enter a valid email address (e.g., user@example.com)
+                  </p>
+                )}
               </div>
 
               <div>
@@ -1115,7 +1148,13 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService, isAdmin 
                   value={customerInfo.phone}
                   onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
                   placeholder="(555) 123-4567"
+                  className={customerInfo.phone && !isValidPhone(customerInfo.phone) ? "border-destructive" : ""}
                 />
+                {customerInfo.phone && !isValidPhone(customerInfo.phone) && (
+                  <p className="text-xs text-destructive mt-1">
+                    Phone number must contain at least 7 digits
+                  </p>
+                )}
               </div>
 
               <div>
@@ -1148,7 +1187,12 @@ export const BookingDialog = ({ open, onOpenChange, preSelectedService, isAdmin 
               </Button>
               <Button
                 onClick={handleSubmit}
-                disabled={!customerInfo.name || !customerInfo.email || !customerInfo.phone || isSubmitting}
+                disabled={
+                  !isValidName(customerInfo.name) ||
+                  !isValidEmail(customerInfo.email) ||
+                  !isValidPhone(customerInfo.phone) ||
+                  isSubmitting
+                }
                 loading={isSubmitting}
               >
                 Confirm Booking
