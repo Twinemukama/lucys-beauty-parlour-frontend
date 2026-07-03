@@ -246,11 +246,99 @@ const mockServiceOptions: MockServiceOption[] = [
   },
   {
     id: 3,
-    service: "Makeup",
-    name: "Soft Glam",
-    duration: "1-1.5 hours",
+    service: "Nails",
+    name: "Stick ons with Gel",
+    duration: "3 hours",
+    basePrice: 45000, // UGX
+    descriptions: ["None", "3D Design", "Magnet Design", "Marble", "Chrome", "Ombre"],
+  },
+  {
+    id: 4,
+    service: "Nails",
+    name: "Gel Builder on Natural Nails",
+    duration: "2 hours",
+    basePrice: 45000, // UGX
+    descriptions: ["None", "3D Design", "Magnet Design", "Marble", "Chrome", "Ombre"],
+  },
+  {
+    id: 5,
+    service: "Nails",
+    name: "Gel Manicure",
+    duration: "1 hour",
+    basePrice: 25000, // UGX
+    descriptions: ["None", "3D Design", "Magnet Design", "Marble", "Chrome", "Ombre"],
+  },
+  {
+    id: 6,
+    service: "Nails",
+    name: "Nail Clipping",
+    duration: "30 minutes",
+    basePrice: 50000, // UGX
+    descriptions: ["None"],
+  },
+   {
+    id: 23,
+    service: "Nails",
+    name: "Gel Builder(Tips)",
+    duration: "3 hours",
+    basePrice: 70000, // UGX
+    descriptions: ["None", "3D Design", "Magnet Design", "Marble", "Chrome", "Ombre"],
+  },
+  {
+    id: 24,
+    service: "Nails",
+    name: "Refill Builder",
+    duration: "3 hours",
+    basePrice: 40000, // UGX
+    descriptions: ["None", "3D Design", "Magnet Design", "Marble", "Chrome", "Ombre"],
+  },
+  {
+    id: 25,
+    service: "Nails",
+    name: "3D Glass",
+    duration: "3 hours",
     basePrice: 120000, // UGX
-    descriptions: ["Day", "Evening"],
+    descriptions: ["None", "3D Design", "Magnet Design", "Marble", "Chrome", "Ombre"],
+  },
+  {
+    id: 26,
+    service: "Nails",
+    name: "Gel on Toes",
+    duration: "1 hour",
+    basePrice: 25000, // UGX
+    descriptions: ["None", "3D Design", "Magnet Design", "Marble", "Chrome", "Ombre"],
+  },
+  {
+    id: 27,
+    service: "Nails",
+    name: "Builder on Natural Toes",
+    duration: "1 hour",
+    basePrice: 30000, // UGX
+    descriptions: ["None", "3D Design", "Magnet Design", "Marble", "Chrome", "Ombre"],
+  },
+  {
+    id: 28,
+    service: "Nails",
+    name: "Foot Scrub",
+    duration: "30 minutes",
+    basePrice: 30000, // UGX
+    descriptions: ["None"],
+  },
+  {
+    id: 29,
+    service: "Nails",
+    name: "Gel Soak Off",
+    duration: "30 minutes",
+    basePrice: 5000, // UGX
+    descriptions: ["None"],
+  },
+  {
+    id: 30,
+    service: "Nails",
+    name: "Builder Soak Off",
+    duration: "30 minutes",
+    basePrice: 10000, // UGX
+    descriptions: ["None"],
   },
   {
     id: 22,
@@ -259,30 +347,6 @@ const mockServiceOptions: MockServiceOption[] = [
     duration: "20-30 minutes",
     basePrice: 5000, // UGX
     descriptions: ["None"],
-  },
-  {
-    id: 4,
-    service: "Makeup",
-    name: "Bridal Makeup",
-    duration: "2 hours",
-    basePrice: 180000, // UGX
-    descriptions: ["Bride", "Bridesmaid"],
-  },
-  {
-    id: 5,
-    service: "Nails",
-    name: "Gel Manicure",
-    duration: "1 hour",
-    basePrice: 80000, // UGX
-    descriptions: ["Short", "Medium", "Long"],
-  },
-  {
-    id: 6,
-    service: "Nails",
-    name: "Acrylic Full Set",
-    duration: "1.5 hours",
-    basePrice: 110000, // UGX
-    descriptions: ["Short", "Medium", "Long"],
   },
 ];
 
@@ -315,10 +379,12 @@ const descriptionPricingMap: Record<string, number> = {
   // Bridal Makeup
   "Bride": 20000,
   "Bridesmaid": 10000,
-  // Gel Manicure & Acrylic Full Set
-  // "Short": 0,
-  // "Medium": 5000,
-  // "Long": 10000, 
+  //nails
+  "3D Design": 10000,
+  "Magnet Design": 5000,
+  "Marble": 10000,
+  "Chrome": 15000,
+  "Ombre": 20000
 };
 
 // Optional service-specific pricing overrides by service ID
@@ -477,10 +543,12 @@ const staff = [
   { id: "lonnet", name: "Lonnet" },
   { id: "spe", name: "Shannitah" },
   { id: "truth", name: "Truth" },
-  { id: "jim", name: "Annitah" },
+  { id: "jim", name: "Jim" },
   { id: "destiny", name: "Destiny" },
   { id: "joan", name: "Joan" },
   { id: "gift", name: "Gift" },
+  { id: "annitah", name: "Annitah" },
+  { id: "sharifah", name: "Sharifah" },
 ];
 
 const generateTimeSlots = () => {

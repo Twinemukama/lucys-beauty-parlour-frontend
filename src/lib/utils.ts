@@ -9,10 +9,10 @@ export function cn(...inputs: ClassValue[]) {
 export const serviceNameMap: Record<number, string> = {
   1: "Knotless Braids",
   2: "Wig Install",
-  3: "Soft Glam",
-  4: "Bridal Makeup",
+  3: "Stick ons with Gel",
+  4: "Gel Builder on Natural Nails",
   5: "Gel Manicure",
-  6: "Acrylic Full Set",
+  6: "Nail Clipping",
   7: "Senegalese Twists",
   8: "Soft Locs",
   9: "Butterfly Locs",
@@ -29,6 +29,15 @@ export const serviceNameMap: Record<number, string> = {
   20: "Sew-ins",
   21: "Fulani Passion Twists",
   22: "Eyebrow Trimming",
+  23: "Gel Builder(Tips)",
+  24: "Refill Builder",
+  25: "3D Glass",
+  26: "Gel on Toes",
+  27: "Builder on Natural Toes",
+  28: "Foot Scrub",
+  29: "Gel Soak Off",
+  30: "Builder Soak Off"
+
 };
 
 export const getServiceDisplayName = (serviceId: number, variant: string): string => {
